@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; Story-Map-App/1.0)',
         'Referer': 'https://instagram.com/',
-        'Accept': 'image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+        'Accept': 'image/webp,image/apng,image/svg+xml,image/*,video/*,*/*;q=0.8',
       },
       // Cache the fetch for 6 hours (longer cache)
       next: { revalidate: 21600 }
@@ -33,15 +33,19 @@ export async function GET(request: NextRequest) {
     const contentType = response.headers.get('content-type');
     
     // Stream the response for better performance
-    return new NextResponse(response.body, {
-      headers: {
-        'Content-Type': contentType || 'image/jpeg',
-        'Cache-Control': 'public, max-age=21600, s-maxage=604800', // Cache for 6 hours, CDN for 1 week
-        'Access-Control-Allow-Origin': '*',
-        'ETag': response.headers.get('ETag') || undefined,
-        'Last-Modified': response.headers.get('Last-Modified') || undefined,
-      }
-    });
+    const headers: Record<string, string> = {
+      'Content-Type': contentType || (url.includes('.mp4') || url.includes('video') ? 'video/mp4' : 'image/jpeg'),
+      'Cache-Control': 'public, max-age=21600, s-maxage=604800', // Cache for 6 hours, CDN for 1 week
+      'Access-Control-Allow-Origin': '*',
+    };
+
+    const etag = response.headers.get('ETag');
+    const lastModified = response.headers.get('Last-Modified');
+    
+    if (etag) headers['ETag'] = etag;
+    if (lastModified) headers['Last-Modified'] = lastModified;
+
+    return new NextResponse(response.body, { headers });
   } catch (error) {
     console.error('Error proxying image:', error);
     return NextResponse.json({ error: 'Failed to proxy image' }, { status: 500 });

@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { isAuthenticated, getCurrentUser } from '@/lib/auth';
 import StoryBrowser from '@/components/StoryBrowser';
 import Navigation from '@/components/Navigation';
 
 export default function Stories() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<{ username: string } | null>(null);
 
@@ -46,7 +47,7 @@ export default function Stories() {
       {/* Main Content */}
       <main className="max-w-full mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <StoryBrowser />
+          <StoryBrowser initialCollectionId={searchParams.get('collection') || ''} />
         </div>
       </main>
     </div>

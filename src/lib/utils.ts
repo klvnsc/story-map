@@ -5,24 +5,17 @@
 /**
  * Convert Instagram CDN URLs to use proxy to avoid CORS issues
  * @param url - The Instagram CDN URL 
- * @param preferDirect - Try direct URL first for better performance
- * @param isVideo - Whether this is a video (videos often work direct)
+ * @param preferDirect - Try direct URL first for better performance (ignored for images due to CORS)
+ * @param isVideo - Whether this is a video (videos can work direct)
  * @returns Proxied URL that bypasses CORS restrictions
  */
-export function getProxiedImageUrl(url: string, preferDirect: boolean = false, isVideo: boolean = false): string {
+export function getProxiedImageUrl(url: string, _preferDirect: boolean = false, _isVideo: boolean = false): string {
   if (!url) return url;
   
   // Check if it's an Instagram CDN URL that needs proxying
   if (url.includes('cdninstagram.com') || url.includes('scontent')) {
-    // Videos often work better direct (different CORS handling)
-    if (isVideo) {
-      return url;
-    }
-    // For development, try direct first for performance
-    if (preferDirect && process.env.NODE_ENV === 'development') {
-      return url;
-    }
-    // Route through our proxy API to bypass CORS
+    // ALWAYS route through proxy due to CORS restrictions
+    // Both images and videos fail with ERR_BLOCKED_BY_RESPONSE.NotSameOrigin
     return `/api/proxy-image?url=${encodeURIComponent(url)}`;
   }
   
