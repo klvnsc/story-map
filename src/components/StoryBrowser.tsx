@@ -39,7 +39,11 @@ interface Filters {
   search: string;
 }
 
-export default function StoryBrowser() {
+interface StoryBrowserProps {
+  initialCollectionId?: string;
+}
+
+export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserProps) {
   const router = useRouter();
   const [stories, setStories] = useState<Story[]>([]);
   const [collections, setCollections] = useState<StoryCollection[]>([]);
@@ -47,14 +51,14 @@ export default function StoryBrowser() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalStories, setTotalStories] = useState(0);
   const [filters, setFilters] = useState<Filters>({
-    collection: '',
+    collection: initialCollectionId,
     region: '',
     phase: '',
     mediaType: '',
     search: ''
   });
 
-  const STORIES_PER_PAGE = 50;
+  const STORIES_PER_PAGE = 12; // 4 columns x 3 rows for optimal layout
 
   // Fetch collections for filtering
   useEffect(() => {
@@ -228,7 +232,7 @@ export default function StoryBrowser() {
 
   const clearFilters = () => {
     setFilters({
-      collection: '',
+      collection: initialCollectionId, // Keep the initial collection from URL
       region: '',
       phase: '',
       mediaType: '',
@@ -258,7 +262,7 @@ export default function StoryBrowser() {
               value={filters.search}
               onChange={(e) => updateFilter('search', e.target.value)}
               placeholder="Collection or location..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 placeholder-gray-500"
             />
           </div>
 
@@ -270,7 +274,7 @@ export default function StoryBrowser() {
             <select
               value={filters.collection}
               onChange={(e) => updateFilter('collection', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
             >
               <option value="">All Collections</option>
               {collections.map(collection => (
@@ -289,7 +293,7 @@ export default function StoryBrowser() {
             <select
               value={filters.region}
               onChange={(e) => updateFilter('region', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
             >
               <option value="">All Regions</option>
               {uniqueRegions.map(region => (
@@ -306,7 +310,7 @@ export default function StoryBrowser() {
             <select
               value={filters.phase}
               onChange={(e) => updateFilter('phase', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
             >
               <option value="">All Phases</option>
               {uniquePhases.map(phase => (
@@ -323,7 +327,7 @@ export default function StoryBrowser() {
             <select
               value={filters.mediaType}
               onChange={(e) => updateFilter('mediaType', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
             >
               <option value="">All Types</option>
               <option value="image">Images</option>
@@ -356,42 +360,80 @@ export default function StoryBrowser() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-3">
+          <div className="grid grid-cols-4 gap-6">
             {stories.map((story) => (
               <div
                 key={story.id}
                 onClick={() => router.push(`/story/${story.id}`)}
-                className="group relative bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-200 cursor-pointer"
+                className="group relative bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-200 cursor-pointer max-w-xs mx-auto"
               >
-                <div className="aspect-[9/16] relative overflow-hidden rounded-t-lg">
+                <div className="aspect-square relative overflow-hidden rounded-t-lg bg-gray-100">
                   {story.media_type === 'video' ? (
-                    <video
-                      src={getProxiedImageUrl(story.cdn_url, true, true)}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                      muted
-                      playsInline
-                      preload="none"
-                      crossOrigin="anonymous"
-                      onMouseEnter={(e) => {
-                        const video = e.target as HTMLVideoElement;
-                        video.currentTime = 1; // Show frame from 1 second
-                      }}
-                    />
+                    <>
+                      {/* Video loading placeholder */}
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                        <div className="text-gray-400">
+                          <svg className="w-8 h-8 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 6a2 2 0 012-2h6l2 2h6a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                          </svg>
+                        </div>
+                      </div>
+                      
+                      <video
+                        src={getProxiedImageUrl(story.cdn_url, false, true)}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                        muted
+                        playsInline
+                        preload="metadata"
+                        crossOrigin="anonymous"
+                        onLoadedData={(e) => {
+                          // Hide loading placeholder when video loads
+                          const target = e.target as HTMLVideoElement;
+                          const placeholder = target.parentElement?.querySelector('div');
+                          if (placeholder) placeholder.style.display = 'none';
+                        }}
+                        onMouseEnter={(e) => {
+                          const video = e.target as HTMLVideoElement;
+                          video.currentTime = 1; // Show frame from 1 second
+                        }}
+                        onError={() => {
+                          console.warn('Video failed to load:', story.id, story.cdn_url);
+                          // Keep placeholder visible on error
+                        }}
+                      />
+                    </>
                   ) : (
-                    <img
-                      src={getProxiedImageUrl(story.cdn_url, true, false)}
-                      alt={`Story ${story.story_index}`}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                      loading="lazy"
-                      onError={(e) => {
-                        // Fallback to direct URL if proxy fails
-                        const target = e.target as HTMLImageElement;
-                        if (target.src.includes('/api/proxy-image')) {
-                          console.warn('Proxy failed, using direct URL for:', story.id);
-                          target.src = getDirectImageUrl(story.cdn_url);
-                        }
-                      }}
-                    />
+                    <>
+                      {/* Loading placeholder */}
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                        <div className="text-gray-400">
+                          <svg className="w-8 h-8 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      </div>
+                      
+                      <img
+                        src={getProxiedImageUrl(story.cdn_url, false, false)}
+                        alt={`Story ${story.story_index}`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                        loading="lazy"
+                        onLoad={(e) => {
+                          // Hide loading placeholder when image loads
+                          const target = e.target as HTMLImageElement;
+                          const placeholder = target.parentElement?.querySelector('div');
+                          if (placeholder) placeholder.style.display = 'none';
+                        }}
+                        onError={(e) => {
+                          // Fallback to direct URL if proxy fails
+                          const target = e.target as HTMLImageElement;
+                          if (target.src.includes('/api/proxy-image')) {
+                            console.warn('Proxy failed, using direct URL for:', story.id);
+                            target.src = getDirectImageUrl(story.cdn_url);
+                          }
+                        }}
+                      />
+                    </>
                   )}
                   
                   {/* Media type indicator */}
