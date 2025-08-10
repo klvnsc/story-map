@@ -1,0 +1,84 @@
+[dotenv@17.2.1] injecting env (3) from .env.local -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+🚀 Starting corrected story import...
+Found 61 collections in ig-data.csv
+(node:80079) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Found 61 collections in database
+✅ Mapped 1.csv → Collection: Wales 🏴󠁧󠁢󠁷󠁬󠁳󠁿
+✅ Mapped 2.csv → Collection: England 🏴󠁧󠁢󠁥󠁮󠁧󠁿
+✅ Mapped 3.csv → Collection: Scotland 🏴󠁧󠁢󠁳󠁣󠁴󠁿
+✅ Mapped 4.csv → Collection: Scotland 🏴󠁧󠁢󠁳󠁣󠁴󠁿
+✅ Mapped 5.csv → Collection: Podcast
+✅ Mapped 6.csv → Collection: England 🏴󠁧󠁢󠁥󠁮󠁧󠁿
+✅ Mapped 7.csv → Collection: England 🏴󠁧󠁢󠁥󠁮󠁧󠁿
+✅ Mapped 8.csv → Collection: Build 2.0
+✅ Mapped 9.csv → Collection: England 🏴󠁧󠁢󠁥󠁮󠁧󠁿
+✅ Mapped 10.csv → Collection: Germany 🇩🇪 II
+✅ Mapped 11.csv → Collection: Germany 🇩🇪 I
+✅ Mapped 12.csv → Collection: Morocco 🇲🇦 VI
+✅ Mapped 13.csv → Collection: Morocco 🇲🇦 V
+✅ Mapped 14.csv → Collection: Souls pt. 2
+✅ Mapped 15.csv → Collection: Morocco 🇲🇦 IV
+✅ Mapped 16.csv → Collection: Morocco 🇲🇦 III
+✅ Mapped 17.csv → Collection: Morocco 🇲🇦 II
+✅ Mapped 18.csv → Collection: Thoughts
+✅ Mapped 19.csv → Collection: Morocco 🇲🇦 I
+✅ Mapped 20.csv → Collection: Italy 🇮🇹 III
+✅ Mapped 21.csv → Collection: Spain 🇪🇸 II
+✅ Mapped 22.csv → Collection: Spain 🇪🇸 I
+✅ Mapped 23.csv → Collection: France 🇫🇷
+✅ Mapped 24.csv → Collection: MFW2025 Vol II
+✅ Mapped 25.csv → Collection: MFW2025 Vol I
+✅ Mapped 26.csv → Collection: Italy 🇮🇹 II
+✅ Mapped 27.csv → Collection: Italy 🇮🇹 I
+✅ Mapped 28.csv → Collection: Souls pt. 1
+✅ Mapped 29.csv → Collection: Greece 🇬🇷 II
+✅ Mapped 30.csv → Collection: Greece 🇬🇷 I
+✅ Mapped 31.csv → Collection: Bulgaria 🇧🇬
+✅ Mapped 32.csv → Collection: Turkey 🇹🇷 3
+✅ Mapped 33.csv → Collection: Turkey 🇹🇷 2
+✅ Mapped 34.csv → Collection: Turkey 🇹🇷 1
+✅ Mapped 35.csv → Collection: Georgia 🇬🇪 3
+✅ Mapped 36.csv → Collection: Armenia 🇦🇲 3
+✅ Mapped 37.csv → Collection: Armenia 🇦🇲2
+✅ Mapped 38.csv → Collection: Armenia 🇦🇲 1
+✅ Mapped 39.csv → Collection: Georgia 🇬🇪 2
+✅ Mapped 40.csv → Collection: Georgia 🇬🇪 1
+✅ Mapped 41.csv → Collection: Tajikistan 🇹🇯
+✅ Mapped 42.csv → Collection: Russia 🇷🇺
+✅ Mapped 43.csv → Collection: Kazakhstan 🇰🇿 4
+✅ Mapped 44.csv → Collection: Kazakhstan 🇰🇿 3
+✅ Mapped 45.csv → Collection: Uzbekistan 🇺🇿 3
+✅ Mapped 46.csv → Collection: Uzbekistan 🇺🇿 2
+✅ Mapped 47.csv → Collection: Uzbekistan 🇺🇿 1
+✅ Mapped 48.csv → Collection: Kazakhstan 🇰🇿 2
+✅ Mapped 49.csv → Collection: Kazakhstan 🇰🇿 1
+✅ Mapped 50.csv → Collection: Kyrgyzstan 🇰🇬
+✅ Mapped 51.csv → Collection: Q&A
+✅ Mapped 52.csv → Collection: Mongolia 🇲🇳
+✅ Mapped 53.csv → Collection: MONGOLIA WINTER
+✅ Mapped 54.csv → Collection: 日光
+✅ Mapped 55.csv → Collection: 下関 - 津山 🚴 下集
+✅ Mapped 56.csv → Collection: 下関 - 津山 🚴 中集
+✅ Mapped 57.csv → Collection: 下関 - 津山 🚴 上集
+✅ Mapped 58.csv → Collection: INDONESIA
+✅ Mapped 59.csv → Collection: NEW DELHI
+✅ Mapped 60.csv → Collection: LADAKH 2
+✅ Mapped 61.csv → Collection: LADAKH 1
+
+📊 Processing 61 CSV files...
+
+Processing 1.csv → Wales 🏴󠁧󠁢󠁷󠁬󠁳󠁿
+  Found 17 stories in 1.csv
+  ✅ Imported 17 stories (Total: 17)
+
+Processing 2.csv → England 🏴󠁧󠁢󠁥󠁮󠁧󠁿
+  Found 35 stories in 2.csv
+  ✅ Imported 35 stories (Total: 52)
+
+Processing 3.csv → Scotland 🏴󠁧󠁢󠁳󠁣󠁴󠁿
+  Found 66 stories in 3.csv
+  ✅ Imported 66 stories (Total: 118)
+
+Processing 4.csv → Scotland 🏴󠁧󠁢󠁳󠁣󠁴󠁿
+  Found 98 stories in 4.csv

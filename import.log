@@ -1,0 +1,505 @@
+[dotenv@17.2.1] injecting env (3) from .env.local -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+🚀 Starting CSV data import...
+Supabase URL: https://jwxciuejzyvkvxfiyyun.supabase.co
+Importing collections from ig-data.csv...
+(node:58068) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Error inserting collection Wales 🏴󠁧󠁢󠁷󠁬󠁳󠁿: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18011241530716717:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection England 🏴󠁧󠁢󠁥󠁮󠁧󠁿: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18068925452490325:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Scotland 🏴󠁧󠁢󠁳󠁣󠁴󠁿: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18077415214744071:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Scotland 🏴󠁧󠁢󠁳󠁣󠁴󠁿: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18070600946491546:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Podcast: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18062166557266367:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection England 🏴󠁧󠁢󠁥󠁮󠁧󠁿: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18070381891972059:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection England 🏴󠁧󠁢󠁥󠁮󠁧󠁿: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18089901049624656:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Build 2.0: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18057215815963683:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection England 🏴󠁧󠁢󠁥󠁮󠁧󠁿: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18017304146710500:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Germany 🇩🇪 II: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18500727481005649:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Germany 🇩🇪 I: {
+  code: '23505',
+  details: 'Key (highlight_id)=(17935663073901419:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Morocco 🇲🇦 VI: {
+  code: '23505',
+  details: 'Key (highlight_id)=(17973374066841093:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Morocco 🇲🇦 V: {
+  code: '23505',
+  details: 'Key (highlight_id)=(17932045244897253:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Souls pt. 2: {
+  code: '23505',
+  details: 'Key (highlight_id)=(17975341163805031:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Morocco 🇲🇦 IV: {
+  code: '23505',
+  details: 'Key (highlight_id)=(17949446570943474:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Morocco 🇲🇦 III: {
+  code: '23505',
+  details: 'Key (highlight_id)=(17908767675094414:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Morocco 🇲🇦 II: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18077175703725858:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Thoughts: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18030793766230793:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Morocco 🇲🇦 I: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18079492300619829:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Italy 🇮🇹 III: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18048676087963901:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Spain 🇪🇸 II: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18035501075407752:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Spain 🇪🇸 I: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18071829082750153:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection France 🇫🇷: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18038123462528317:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection MFW2025 Vol II: {
+  code: '23505',
+  details: 'Key (highlight_id)=(17991384335769961:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection MFW2025 Vol I: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18347481994183019:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Italy 🇮🇹 II: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18102396352485795:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Italy 🇮🇹 I: {
+  code: '23505',
+  details: 'Key (highlight_id)=(17889230265118966:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Souls pt. 1: {
+  code: '23505',
+  details: 'Key (highlight_id)=(17916693795030579:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Greece 🇬🇷 II: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18044152921980963:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Greece 🇬🇷 I: {
+  message: '<html>\r\n' +
+    '<head><title>502 Bad Gateway</title></head>\r\n' +
+    '<body>\r\n' +
+    '<center><h1>502 Bad Gateway</h1></center>\r\n' +
+    '<hr><center>cloudflare</center>\r\n' +
+    '</body>\r\n' +
+    '</html>\r\n'
+}
+Error inserting collection Bulgaria 🇧🇬: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18052837759821656:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Turkey 🇹🇷 3: {
+  code: '23505',
+  details: 'Key (highlight_id)=(17987636276756920:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Turkey 🇹🇷 2: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18037664711047569:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Turkey 🇹🇷 1: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18066993982649869:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Georgia 🇬🇪 3: {
+  code: '23505',
+  details: 'Key (highlight_id)=(17932289318951599:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Armenia 🇦🇲 3: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18040879571160857:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Armenia 🇦🇲2: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18044368168879405:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Armenia 🇦🇲 1: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18137731558325083:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Georgia 🇬🇪 2: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18011275097400978:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Georgia 🇬🇪 1: {
+  code: '23505',
+  details: 'Key (highlight_id)=(17858220288266313:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Tajikistan 🇹🇯: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18040006774818828:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Russia 🇷🇺: {
+  code: '23505',
+  details: 'Key (highlight_id)=(17965710818773208:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Kazakhstan 🇰🇿 4: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18103024393441878:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Kazakhstan 🇰🇿 3: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18053779645660840:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Uzbekistan 🇺🇿 3: {
+  code: '23505',
+  details: 'Key (highlight_id)=(17952841943822134:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Uzbekistan 🇺🇿 2: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18075540595554032:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Uzbekistan 🇺🇿 1: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18122776447372808:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Kazakhstan 🇰🇿 2: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18058314775659069:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Kazakhstan 🇰🇿 1: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18008045279547582:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Kyrgyzstan 🇰🇬: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18450623119021935:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Q&A: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18447928921046336:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection Mongolia 🇲🇳: {
+  code: '23505',
+  details: 'Key (highlight_id)=(17977584701709245:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection MONGOLIA WINTER: {
+  code: '23505',
+  details: 'Key (highlight_id)=(17958474221619709:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection 日光: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18202733329277692:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection 下関 - 津山 🚴 下集: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18048074443469949:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection 下関 - 津山 🚴 中集: {
+  code: '23505',
+  details: 'Key (highlight_id)=(17847537087090006:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection 下関 - 津山 🚴 上集: {
+  code: '23505',
+  details: 'Key (highlight_id)=(17893662158920583:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection INDONESIA: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18001194349870466:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection NEW DELHI: {
+  code: '23505',
+  details: 'Key (highlight_id)=(17909494379698894:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection LADAKH 2: {
+  code: '23505',
+  details: 'Key (highlight_id)=(17984999519177523:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Error inserting collection LADAKH 1: {
+  code: '23505',
+  details: 'Key (highlight_id)=(18064808941402631:breakingcycles.life) already exists.',
+  hint: null,
+  message: 'duplicate key value violates unique constraint "story_collections_highlight_id_key"'
+}
+Importing individual stories...
+Processing 1.csv for collection: North China Phase
+✅ Imported 17 stories for collection: North China Phase
+Processing 2.csv for collection: Central Asia Phase
+✅ Imported 35 stories for collection: Central Asia Phase
+Processing 3.csv for collection: Middle East Phase
+✅ Imported 66 stories for collection: Middle East Phase
+Processing 4.csv for collection: Africa Phase
+✅ Imported 98 stories for collection: Africa Phase
+Processing 5.csv for collection: Europe Phase
+✅ Imported 3 stories for collection: Europe Phase
+Processing 6.csv for collection: Scotland Finale
+✅ Imported 100 stories for collection: Scotland Finale
+Processing 7.csv for collection: Wales 🏴󠁧󠁢󠁷󠁬󠁳󠁿
+✅ Imported 100 stories for collection: Wales 🏴󠁧󠁢󠁷󠁬󠁳󠁿
+Processing 8.csv for collection: England 🏴󠁧󠁢󠁥󠁮󠁧󠁿
+✅ Imported 70 stories for collection: England 🏴󠁧󠁢󠁥󠁮󠁧󠁿
+Processing 9.csv for collection: Scotland 🏴󠁧󠁢󠁳󠁣󠁴󠁿
+✅ Imported 100 stories for collection: Scotland 🏴󠁧󠁢󠁳󠁣󠁴󠁿
+Processing 10.csv for collection: Scotland 🏴󠁧󠁢󠁳󠁣󠁴󠁿
+✅ Imported 19 stories for collection: Scotland 🏴󠁧󠁢󠁳󠁣󠁴󠁿
+Processing 11.csv for collection: Podcast
+✅ Imported 100 stories for collection: Podcast
+Processing 12.csv for collection: England 🏴󠁧󠁢󠁥󠁮󠁧󠁿
+✅ Imported 80 stories for collection: England 🏴󠁧󠁢󠁥󠁮󠁧󠁿
+Processing 13.csv for collection: England 🏴󠁧󠁢󠁥󠁮󠁧󠁿
+✅ Imported 98 stories for collection: England 🏴󠁧󠁢󠁥󠁮󠁧󠁿
+Processing 14.csv for collection: Build 2.0
+✅ Imported 27 stories for collection: Build 2.0
+Processing 15.csv for collection: England 🏴󠁧󠁢󠁥󠁮󠁧󠁿
+✅ Imported 100 stories for collection: England 🏴󠁧󠁢󠁥󠁮󠁧󠁿
+Processing 16.csv for collection: Germany 🇩🇪 II
+✅ Imported 100 stories for collection: Germany 🇩🇪 II
+Processing 17.csv for collection: Germany 🇩🇪 I
+✅ Imported 100 stories for collection: Germany 🇩🇪 I
+Processing 18.csv for collection: Morocco 🇲🇦 VI
+✅ Imported 11 stories for collection: Morocco 🇲🇦 VI
+Processing 19.csv for collection: Morocco 🇲🇦 V
+✅ Imported 100 stories for collection: Morocco 🇲🇦 V
+Processing 20.csv for collection: Souls pt. 2
+✅ Imported 25 stories for collection: Souls pt. 2
+Processing 21.csv for collection: Morocco 🇲🇦 IV
+✅ Imported 18 stories for collection: Morocco 🇲🇦 IV
+Processing 22.csv for collection: Morocco 🇲🇦 III
+✅ Imported 100 stories for collection: Morocco 🇲🇦 III
+Processing 23.csv for collection: Morocco 🇲🇦 II
+✅ Imported 22 stories for collection: Morocco 🇲🇦 II
+Processing 24.csv for collection: Thoughts
+✅ Imported 40 stories for collection: Thoughts
+Processing 25.csv for collection: Morocco 🇲🇦 I
+✅ Imported 99 stories for collection: Morocco 🇲🇦 I
+Processing 26.csv for collection: Italy 🇮🇹 III
+✅ Imported 99 stories for collection: Italy 🇮🇹 III
+Processing 27.csv for collection: Spain 🇪🇸 II
+✅ Imported 100 stories for collection: Spain 🇪🇸 II
+Processing 28.csv for collection: Spain 🇪🇸 I
+✅ Imported 100 stories for collection: Spain 🇪🇸 I
+Processing 29.csv for collection: France 🇫🇷
+✅ Imported 70 stories for collection: France 🇫🇷
+Processing 30.csv for collection: MFW2025 Vol II
+✅ Imported 100 stories for collection: MFW2025 Vol II
+Processing 31.csv for collection: MFW2025 Vol I
+✅ Imported 79 stories for collection: MFW2025 Vol I
+Processing 32.csv for collection: Italy 🇮🇹 II
+✅ Imported 100 stories for collection: Italy 🇮🇹 II
+Processing 33.csv for collection: Italy 🇮🇹 I
+✅ Imported 100 stories for collection: Italy 🇮🇹 I
+Processing 34.csv for collection: Souls pt. 1
+✅ Imported 100 stories for collection: Souls pt. 1
+Processing 35.csv for collection: Greece 🇬🇷 II
+✅ Imported 74 stories for collection: Greece 🇬🇷 II
+Processing 36.csv for collection: Greece 🇬🇷 I
+✅ Imported 9 stories for collection: Greece 🇬🇷 I
+Processing 37.csv for collection: Bulgaria 🇧🇬
+✅ Imported 100 stories for collection: Bulgaria 🇧🇬
+Processing 38.csv for collection: Turkey 🇹🇷 3
+✅ Imported 99 stories for collection: Turkey 🇹🇷 3
+Processing 39.csv for collection: Turkey 🇹🇷 2
+✅ Imported 100 stories for collection: Turkey 🇹🇷 2
+Processing 40.csv for collection: Turkey 🇹🇷 1
+✅ Imported 98 stories for collection: Turkey 🇹🇷 1
+Processing 41.csv for collection: Georgia 🇬🇪 3
+✅ Imported 99 stories for collection: Georgia 🇬🇪 3
+Processing 42.csv for collection: Armenia 🇦🇲 3
+✅ Imported 26 stories for collection: Armenia 🇦🇲 3
+Processing 43.csv for collection: Armenia 🇦🇲2
+✅ Imported 22 stories for collection: Armenia 🇦🇲2
+Processing 44.csv for collection: Armenia 🇦🇲 1
+✅ Imported 100 stories for collection: Armenia 🇦🇲 1
+Processing 45.csv for collection: Georgia 🇬🇪 2
+✅ Imported 25 stories for collection: Georgia 🇬🇪 2
+Processing 46.csv for collection: Georgia 🇬🇪 1
+✅ Imported 100 stories for collection: Georgia 🇬🇪 1
+Processing 47.csv for collection: Tajikistan 🇹🇯
+✅ Imported 100 stories for collection: Tajikistan 🇹🇯
+Processing 48.csv for collection: Russia 🇷🇺
+✅ Imported 93 stories for collection: Russia 🇷🇺
+Processing 49.csv for collection: Kazakhstan 🇰🇿 4
+✅ Imported 98 stories for collection: Kazakhstan 🇰🇿 4
+Processing 50.csv for collection: Kazakhstan 🇰🇿 3
+✅ Imported 89 stories for collection: Kazakhstan 🇰🇿 3
+Processing 51.csv for collection: Uzbekistan 🇺🇿 3
+✅ Imported 1 stories for collection: Uzbekistan 🇺🇿 3
+Processing 52.csv for collection: Uzbekistan 🇺🇿 2
+✅ Imported 100 stories for collection: Uzbekistan 🇺🇿 2
+Processing 53.csv for collection: Uzbekistan 🇺🇿 1
+✅ Imported 74 stories for collection: Uzbekistan 🇺🇿 1
+Processing 54.csv for collection: Kazakhstan 🇰🇿 2
+✅ Imported 100 stories for collection: Kazakhstan 🇰🇿 2
+Processing 55.csv for collection: Kazakhstan 🇰🇿 1
+✅ Imported 24 stories for collection: Kazakhstan 🇰🇿 1
+Processing 56.csv for collection: Kyrgyzstan 🇰🇬
+✅ Imported 100 stories for collection: Kyrgyzstan 🇰🇬
+Processing 57.csv for collection: Q&A
+✅ Imported 100 stories for collection: Q&A
+Processing 58.csv for collection: Mongolia 🇲🇳
+✅ Imported 44 stories for collection: Mongolia 🇲🇳
+Processing 59.csv for collection: MONGOLIA WINTER
+✅ Imported 29 stories for collection: MONGOLIA WINTER
+Processing 60.csv for collection: 日光
+✅ Imported 59 stories for collection: 日光
+Processing 61.csv for collection: 下関 - 津山 🚴 下集
+✅ Imported 99 stories for collection: 下関 - 津山 🚴 下集
+⚠️ CSV file not found: 62.csv
+⚠️ CSV file not found: 63.csv
+⚠️ CSV file not found: 64.csv
+⚠️ CSV file not found: 65.csv
+⚠️ CSV file not found: 66.csv
+⚠️ CSV file not found: 67.csv
+🎉 Data import completed successfully!
