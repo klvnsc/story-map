@@ -930,7 +930,7 @@ export default function StoryDetail() {
                                       alert('No GPS correlation found for this date');
                                     }
                                   }
-                                } catch (error) {
+                                } catch {
                                   alert('Failed to refresh GPS suggestions');
                                 }
                               } else {

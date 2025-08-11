@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Map, { Marker, Popup } from 'react-map-gl/mapbox';
+import mapboxgl from 'mapbox-gl';
 import { supabase } from '@/lib/supabase';
 import { Story } from '@/types';
 import { getProxiedImageUrl } from '@/lib/utils';
@@ -33,10 +34,10 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
     zoom: 2
   });
 
-  const mapRef = useRef<any>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
 
   // Determine expedition phase for a story (prioritize individual GPS data over collection data)
-  const getStoryExpeditionPhase = (story: any): string => {
+  const getStoryExpeditionPhase = (story: Story & { story_collections?: { expedition_phase?: string } }): string => {
     // If story has manual GPS date, calculate phase from date
     if (story.estimated_date_gps && story.tag_source === 'manual') {
       const date = new Date(story.estimated_date_gps);
@@ -239,7 +240,7 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
                   }}
                 />
                 <span className="text-sm font-medium">
-                  {(selectedStory as any).story_collections?.name || 'Unknown Collection'}
+                  {(selectedStory as Story & { story_collections?: { name?: string } }).story_collections?.name || 'Unknown Collection'}
                 </span>
               </div>
               
