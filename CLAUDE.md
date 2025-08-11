@@ -96,28 +96,83 @@ NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=your_mapbox_access_token
 
 ## GPS-Story Correlation Strategy
 
-### ⚠️ Expedition Phase Mapping Issue
+### 🚨 CRITICAL EXPEDITION SCOPE CORRECTION
 
-**CRITICAL DATA ORDERING BUG**: The current phase mapping in `scripts/import-csv-data.ts` assumes ascending chronological order, but the actual CSV data (`ig-data.csv`) is in **DESCENDING** order:
+**MAJOR DISCOVERY**: Collections 52-61 are **NOT part of the 13-month Land Rover expedition**. These contain pre-expedition content that occurred BEFORE the expedition started in July 2024.
+
+### ✅ Corrected Expedition Mapping
+
+**13-Month Expedition Collections (1-51 only)**:
 
 ```typescript
-// CURRENT (INCORRECT) MAPPING:
+// CORRECTED EXPEDITION MAPPING (Collections 1-51 only)
 const EXPEDITION_PHASES = {
-  'north_china': { start: 1, end: 15, date: '2024-07-01' },     // Actually Scotland/Europe
-  'central_asia': { start: 16, end: 35, date: '2024-08-31' },  // Actually Africa/Middle East
-  'middle_east': { start: 36, end: 45, date: '2024-10-17' },   // Actually Central Asia  
-  'africa': { start: 46, end: 55, date: '2025-01-06' },        // Actually North China
-  'europe': { start: 56, end: 60, date: '2025-03-14' },        // Actually India/Ladakh
-  'scotland': { start: 61, end: 61, date: '2025-06-24' }       // Actually India/Ladakh
+  // Phase 1: UK/Scotland Finale (Collections 1-15)
+  'uk_scotland': { 
+    collection_range: [1, 15], 
+    tracks: [25, 26, 27, 28, 29],
+    date_range: "May-July 2025",
+    regions: ["Wales", "England", "Scotland", "UK"]
+  },
+  
+  // Phase 2: Europe/Mediterranean (Collections 16-35)  
+  'europe_mediterranean': { 
+    collection_range: [16, 35], 
+    tracks: [20, 21, 22, 23, 24],
+    date_range: "March-May 2025",
+    regions: ["Germany", "Morocco", "Spain", "France", "Italy", "Greece", "Bulgaria"]
+  },
+  
+  // Phase 3: Middle East/Caucasus (Collections 36-45)
+  'middle_east_caucasus': { 
+    collection_range: [36, 45], 
+    tracks: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+    date_range: "October 2024 - March 2025",
+    regions: ["Georgia", "Armenia", "Turkey", "Middle East", "Caucasus"]
+  },
+  
+  // Phase 4: Central Asia (Collections 46-51)
+  'central_asia': { 
+    collection_range: [46, 51], 
+    tracks: [3, 4, 5, 6, 7, 8, 9], // Track 3 has NO collection correlation
+    date_range: "July-October 2024",
+    regions: ["Tajikistan", "Russia", "Kazakhstan", "Uzbekistan", "Kyrgyzstan"]
+  }
+};
+
+// EXCLUDED: Pre-expedition content (Collections 52-61)
+const EXCLUDED_COLLECTIONS = {
+  collection_range: [52, 61], // 10 collections, ~687 stories
+  reason: "pre_expedition_content", 
+  content: ["Q&A", "Mongolia", "Japan cycling", "Indonesia", "India/Ladakh"],
+  gps_correlation: "NONE - occurred before expedition start"
 };
 ```
 
-**Actual CSV Order** (row 1 = latest, row 61 = earliest):
-- Collections 1-15: Scotland/Wales/England (June-July 2025)
-- Collections 16-35: Europe/Morocco/Spain (Mar-May 2025) 
-- Collections 36-45: Africa/Middle East (Jan-Mar 2025)
-- Collections 46-55: Central Asia/Mongolia (Aug-Dec 2024)
-- Collections 56-61: North China/India/Ladakh (June-Aug 2024)
+### 🗺️ Complete Expedition Route Sequence
+
+**Geographic Progression** (13-month Land Rover Defender journey):
+```
+North China → Central Asia → Middle East → Africa → Mediterranean → Europe → UK → Scotland
+```
+
+**Collection Coverage** (DESCENDING chronological order):
+- Collections 1-15: **Scotland → UK** (finale, June-July 2025)
+- Collections 16-35: **Europe → Mediterranean** (March-May 2025)  
+- Collections 36-45: **Africa → Middle East** (Oct 2024-March 2025)
+- Collections 46-51: **Central Asia** (July-Oct 2024, starting with Kyrgyzstan)
+- **Missing**: **North China** phase (Track 3 exists but no story collections)
+
+### 🔍 Critical Data Gaps Identified
+
+1. **Track 3 Gap**: GPS Track 3 (North China, July 1-18, 2024) has NO corresponding story collections
+   - This is the "TRUE EXPEDITION START" but no stories were captured in North China
+   - Collection 51 (Kyrgyzstan) is the earliest expedition collection, not North China
+
+2. **Expedition Statistics**:
+   - **Expedition Collections**: 51 collections (Collections 1-51) → ~3,750 stories  
+   - **Excluded Collections**: 10 collections (Collections 52-61) → ~687 stories
+   - **GPS Track Coverage**: Tracks 3-29 (27 tracks) for expedition period only
 
 ### Key Technical Constraints
 - **No Story Timestamps**: Instagram stories lack individual timestamps
@@ -132,6 +187,7 @@ const EXPEDITION_PHASES = {
 - Component files in `/components` with descriptive names
 - Utilities in `/lib` directory
 - Type definitions in `/types` directory
+- **Documentation Structure**: All specs, requirements, and wireframes in `/specs/` folder
 
 ### Naming Conventions
 - React components: PascalCase (StoryGrid, MapView)
@@ -158,8 +214,10 @@ const EXPEDITION_PHASES = {
 - Lazy loading for story grid and map components
 
 ### GPS Data Handling
-- Import GPS tracks as reference data, not for precise correlation
-- Use for geographic context and location suggestions
+- **Limited to high-level metadata** from `data-cy-gps/garmin.md` only
+- **Expedition scope filtering**: Only Collections 1-51 have GPS correlation
+- **Regional context only**: No individual GPS coordinates available
+- **Track-level granularity**: Date ranges and regional descriptions only
 - Privacy-focused: no personal route display, only regional context
 
 ## Current Implementation Status
@@ -184,7 +242,15 @@ const EXPEDITION_PHASES = {
 ├── src/components/             # React components (StoryBrowser, etc.)
 ├── src/lib/supabase.ts        # Supabase client + type definitions
 ├── src/types/index.ts         # Main TypeScript interfaces
+├── specs/                     # Requirements, wireframes, and technical specifications
+│   ├── gps-story-correlation.md           # GPS correlation system specification
+│   ├── story-location-editing-requirements.md  # Location editing requirements (127 REQs)
+│   ├── story-edit-location-wireframe.md         # Location editing UI wireframe
+│   ├── gps-location-api-specifications.md      # API endpoints specification
+│   └── collection-gps-correlation-correction.md # Expedition scope corrections
 ├── scripts/                   # Data import utilities
-├── database/schema.sql        # PostgreSQL schema
-└── data-story-collection/     # 61 CSV files (ig-data.csv + 1.csv-61.csv)
+├── database/                  # Database schema and updates
+│   ├── schema.sql                          # Original PostgreSQL schema
+│   └── schema-updates-gps-location.sql     # GPS location feature schema updates
+└── data-story-collection/     # 61 CSV files (Collections 1-51: expedition, 52-61: excluded)
 ```
