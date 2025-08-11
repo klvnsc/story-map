@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import Map, { Marker, Popup } from 'react-map-gl/mapbox';
+import Map, { Marker, Popup, type MapRef } from 'react-map-gl/mapbox';
 import { supabase } from '@/lib/supabase';
 import { Story } from '@/types';
 import { getProxiedImageUrl } from '@/lib/utils';
@@ -33,7 +33,33 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
     zoom: 2
   });
 
-  const mapRef = useRef<any>(null);
+  const mapRef = useRef<MapRef | null>(null);
+
+  // Determine expedition phase for a story (prioritize individual GPS data over collection data)
+  const getStoryExpeditionPhase = (story: Story & { 
+    story_collections?: { expedition_phase?: string };
+    estimated_date_gps?: string;
+    tag_source?: string;
+  }): string => {
+    // If story has manual GPS date, calculate phase from date
+    if (story.estimated_date_gps && story.tag_source === 'manual') {
+      const date = new Date(story.estimated_date_gps);
+      const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+      
+      // Map dates to expedition phases (matches GPS correlation logic)
+      if (dateStr >= '2025-05-25' && dateStr <= '2025-07-02') return 'uk_scotland';
+      if (dateStr >= '2025-03-14' && dateStr <= '2025-05-25') return 'europe_mediterranean';
+      if (dateStr >= '2024-10-17' && dateStr <= '2025-03-12') return 'middle_east_caucasus';
+      if (dateStr >= '2024-07-01' && dateStr <= '2024-10-16') return 'central_asia';
+      
+      // Pre-expedition or post-expedition
+      if (dateStr < '2024-07-01') return 'pre_expedition';
+      if (dateStr > '2025-07-02') return 'post_expedition';
+    }
+    
+    // Fall back to collection expedition phase
+    return story.story_collections?.expedition_phase || 'unknown';
+  };
 
   // Load stories with locations
   const loadStoriesWithLocations = async () => {
@@ -43,7 +69,9 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
         *,
         story_collections (
           name,
-          expedition_phase
+          expedition_phase,
+          collection_index,
+          is_expedition_scope
         )
       `)
       .not('latitude', 'is', null)
@@ -110,12 +138,14 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
       if (minLng !== Infinity) {
         // Add padding to bounds
         const padding = 0.5;
-        const bounds = [
-          [minLng - padding, minLat - padding], // Southwest
-          [maxLng + padding, maxLat + padding]  // Northeast
+        const bounds: [number, number, number, number] = [
+          minLng - padding, // West
+          minLat - padding, // South
+          maxLng + padding, // East
+          maxLat + padding  // North
         ];
         
-        mapRef.current.fitBounds(bounds, {
+        mapRef.current?.getMap().fitBounds(bounds, {
           padding: 50,
           maxZoom: 10
         });
@@ -125,12 +155,20 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
 
   const getMarkerColor = (expeditionPhase: string) => {
     const colors = {
-      'scotland': '#8B5CF6', // Purple
-      'europe': '#3B82F6',   // Blue  
-      'africa': '#EF4444',   // Red
-      'middle_east': '#F59E0B', // Amber
-      'central_asia': '#10B981', // Emerald
-      'north_china': '#EC4899'  // Pink
+      // Updated phase names (GPS correlation format)
+      'uk_scotland': '#8B5CF6',      // Purple
+      'europe_mediterranean': '#3B82F6', // Blue  
+      'middle_east_caucasus': '#F59E0B', // Amber
+      'central_asia': '#10B981',     // Emerald
+      'pre_expedition': '#6B7280',   // Gray
+      'post_expedition': '#374151',  // Dark Gray
+      
+      // Legacy phase names (for backward compatibility)
+      'scotland': '#8B5CF6',         // Purple
+      'europe': '#3B82F6',           // Blue  
+      'africa': '#EF4444',           // Red
+      'middle_east': '#F59E0B',      // Amber
+      'north_china': '#EC4899'       // Pink
     };
     return colors[expeditionPhase as keyof typeof colors] || '#6B7280';
   };
@@ -166,7 +204,7 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
         onMove={evt => setViewState(evt.viewState)}
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
         mapStyle="mapbox://styles/mapbox/satellite-v9"
-        className="w-full h-full"
+        style={{ width: '100%', height: '100%' }}
       >
         {/* Story Markers */}
         {stories.map((story) => (
@@ -182,7 +220,7 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
             <div
               className="w-4 h-4 rounded-full border-2 border-white cursor-pointer hover:scale-125 transition-transform shadow-lg"
               style={{ 
-                backgroundColor: getMarkerColor((story as any).story_collections?.expedition_phase || 'unknown')
+                backgroundColor: getMarkerColor(getStoryExpeditionPhase(story))
               }}
             />
           </Marker>
@@ -203,11 +241,11 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
                 <div
                   className="w-3 h-3 rounded-full"
                   style={{ 
-                    backgroundColor: getMarkerColor((selectedStory as any).story_collections?.expedition_phase || 'unknown')
+                    backgroundColor: getMarkerColor(getStoryExpeditionPhase(selectedStory))
                   }}
                 />
                 <span className="text-sm font-medium">
-                  {(selectedStory as any).story_collections?.name || 'Unknown Collection'}
+                  {(selectedStory as Story & { story_collections?: { name?: string } }).story_collections?.name || 'Unknown Collection'}
                 </span>
               </div>
               
