@@ -43,10 +43,11 @@ interface StoryLocationUpdateResponse {
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const storyId = params.id
+    const resolvedParams = await params;
+    const storyId = resolvedParams.id
     
     if (!storyId) {
       return NextResponse.json({

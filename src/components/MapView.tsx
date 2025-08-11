@@ -37,7 +37,11 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
   const mapRef = useRef<mapboxgl.Map | null>(null);
 
   // Determine expedition phase for a story (prioritize individual GPS data over collection data)
-  const getStoryExpeditionPhase = (story: Story & { story_collections?: { expedition_phase?: string } }): string => {
+  const getStoryExpeditionPhase = (story: Story & { 
+    story_collections?: { expedition_phase?: string };
+    estimated_date_gps?: string;
+    tag_source?: string;
+  }): string => {
     // If story has manual GPS date, calculate phase from date
     if (story.estimated_date_gps && story.tag_source === 'manual') {
       const date = new Date(story.estimated_date_gps);
@@ -135,9 +139,11 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
       if (minLng !== Infinity) {
         // Add padding to bounds
         const padding = 0.5;
-        const bounds = [
-          [minLng - padding, minLat - padding], // Southwest
-          [maxLng + padding, maxLat + padding]  // Northeast
+        const bounds: [number, number, number, number] = [
+          minLng - padding, // West
+          minLat - padding, // South
+          maxLng + padding, // East
+          maxLat + padding  // North
         ];
         
         mapRef.current.fitBounds(bounds, {
