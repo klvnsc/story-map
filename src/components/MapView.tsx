@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import Map, { Marker, Popup } from 'react-map-gl/mapbox';
-import mapboxgl from 'mapbox-gl';
+import Map, { Marker, Popup, type MapRef } from 'react-map-gl/mapbox';
 import { supabase } from '@/lib/supabase';
 import { Story } from '@/types';
 import { getProxiedImageUrl } from '@/lib/utils';
@@ -34,7 +33,7 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
     zoom: 2
   });
 
-  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const mapRef = useRef<MapRef | null>(null);
 
   // Determine expedition phase for a story (prioritize individual GPS data over collection data)
   const getStoryExpeditionPhase = (story: Story & { 
@@ -146,7 +145,7 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
           maxLat + padding  // North
         ];
         
-        mapRef.current.fitBounds(bounds, {
+        mapRef.current?.getMap().fitBounds(bounds, {
           padding: 50,
           maxZoom: 10
         });
@@ -205,7 +204,7 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
         onMove={evt => setViewState(evt.viewState)}
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
         mapStyle="mapbox://styles/mapbox/satellite-v9"
-        className="w-full h-full"
+        style={{ width: '100%', height: '100%' }}
       >
         {/* Story Markers */}
         {stories.map((story) => (
