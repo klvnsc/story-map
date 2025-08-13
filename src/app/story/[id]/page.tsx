@@ -584,7 +584,7 @@ export default function StoryDetail() {
                 <div className="aspect-[9/16] bg-gray-100 flex items-center justify-center relative max-w-sm mx-auto">
                   {story.media_type === 'video' ? (
                     <video
-                      src={getProxiedImageUrl(story.cdn_url, false, true)}
+                      src={getProxiedImageUrl(story.cdn_url)}
                       controls
                       className="w-full h-full object-cover"
                       onError={(e) => {

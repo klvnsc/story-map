@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import Map, { Marker, Popup, type MapRef } from 'react-map-gl/mapbox';
+import Map, { Marker, Popup, Source, Layer, type MapRef } from 'react-map-gl/mapbox';
 import { supabase } from '@/lib/supabase';
 import { Story } from '@/types';
-import { getProxiedImageUrl } from '@/lib/utils';
+import { getProxiedImageUrl, getBestAvailableDateString, getBestAvailableDate } from '@/lib/utils';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface ExpeditionTrack {
@@ -38,12 +38,11 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
   // Determine expedition phase for a story (prioritize individual GPS data over collection data)
   const getStoryExpeditionPhase = (story: Story & { 
     story_collections?: { expedition_phase?: string };
-    estimated_date_gps?: string;
-    tag_source?: string;
   }): string => {
-    // If story has manual GPS date, calculate phase from date
-    if (story.estimated_date_gps && story.tag_source === 'manual') {
-      const date = new Date(story.estimated_date_gps);
+    // If story has manual user-assigned date, calculate phase from date
+    const manualDate = story.user_assigned_date || story.estimated_date_gps; // Support both new and legacy fields
+    if (manualDate && story.tag_source === 'manual') {
+      const date = new Date(manualDate);
       const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
       
       // Map dates to expedition phases (matches GPS correlation logic)
@@ -81,7 +80,7 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
       query = query.eq('collection_id', selectedCollectionId);
     }
 
-    const { data, error } = await query.order('estimated_date', { ascending: true });
+    const { data, error } = await query.order('user_assigned_date', { ascending: true, nullsFirst: false });
 
     if (error) {
       console.error('Error loading stories:', error);
@@ -226,6 +225,38 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
           </Marker>
         ))}
 
+        {/* Trip Route Line */}
+        {stories.length > 1 && (
+          <Source
+            type="geojson" 
+            data={{
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: stories
+                  .filter(s => s.latitude != null && s.longitude != null)
+                  .sort((a, b) => {
+                    const dateA = getBestAvailableDateString(a);
+                    const dateB = getBestAvailableDateString(b);
+                    return dateA.localeCompare(dateB);
+                  })
+                  .map(s => [s.longitude!, s.latitude!])
+              }
+            }}
+          >
+            <Layer
+              type="line"
+              paint={{
+                'line-color': '#3B82F6',
+                'line-width': 3,
+                'line-opacity': 0.7,
+                'line-dasharray': [2, 2]
+              }}
+            />
+          </Source>
+        )}
+
         {/* Story Popup */}
         {selectedStory && selectedStory.latitude && selectedStory.longitude && (
           <Popup
@@ -275,9 +306,12 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
               
               <div className="flex justify-between items-center text-xs text-gray-500">
                 <span>{selectedStory.media_type}</span>
-                {selectedStory.estimated_date && (
-                  <span>{new Date(selectedStory.estimated_date).toLocaleDateString()}</span>
-                )}
+                {(() => {
+                  const bestDate = getBestAvailableDate(selectedStory);
+                  return bestDate ? (
+                    <span>{bestDate.toLocaleDateString()}</span>
+                  ) : null;
+                })()}
               </div>
             </div>
           </Popup>

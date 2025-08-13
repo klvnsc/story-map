@@ -5,11 +5,12 @@
 -- STEP 1: Add GPS correlation and date tracking fields to stories table
 -- ============================================================================
 
--- Add GPS correlation date fields
+-- Add GPS correlation date fields with clear naming
 ALTER TABLE stories 
 ADD COLUMN estimated_date_range_start TIMESTAMP WITH TIME ZONE,
 ADD COLUMN estimated_date_range_end TIMESTAMP WITH TIME ZONE,
-ADD COLUMN estimated_date_gps TIMESTAMP WITH TIME ZONE;
+ADD COLUMN user_assigned_date TIMESTAMP WITH TIME ZONE,
+ADD COLUMN collection_default_date TIMESTAMP WITH TIME ZONE;
 
 -- Add regional tags array (separate from general tags)
 ALTER TABLE stories 
@@ -43,8 +44,9 @@ ADD COLUMN expedition_exclude_reason TEXT;
 -- STEP 3: Create indexes for performance
 -- ============================================================================
 
--- Index for GPS date correlation queries
-CREATE INDEX idx_stories_estimated_date_gps ON stories(estimated_date_gps);
+-- Index for date correlation queries with clear naming
+CREATE INDEX idx_stories_user_assigned_date ON stories(user_assigned_date);
+CREATE INDEX idx_stories_collection_default_date ON stories(collection_default_date);
 CREATE INDEX idx_stories_estimated_date_range ON stories(estimated_date_range_start, estimated_date_range_end);
 
 -- Index for regional tag filtering (GIN index for array operations)
@@ -77,10 +79,15 @@ UPDATE stories
 SET date_confidence = 'collection_estimated'
 WHERE date_confidence IS NULL;
 
--- Copy existing estimated_date to estimated_date_gps for stories that have it
+-- Migrate existing data to new field names with proper mapping
 UPDATE stories 
-SET estimated_date_gps = estimated_date
-WHERE estimated_date IS NOT NULL AND estimated_date_gps IS NULL;
+SET collection_default_date = estimated_date
+WHERE estimated_date IS NOT NULL AND collection_default_date IS NULL;
+
+-- Migrate GPS-estimated dates to user_assigned_date (if any exist)
+UPDATE stories 
+SET user_assigned_date = estimated_date_gps
+WHERE estimated_date_gps IS NOT NULL AND user_assigned_date IS NULL;
 
 -- CRITICAL: Mark Collections 52-61 as excluded from expedition scope (pre-expedition content)
 UPDATE story_collections 
@@ -102,7 +109,8 @@ WHERE collection_id IN (
 
 COMMENT ON COLUMN stories.estimated_date_range_start IS 'Start of GPS-correlated date range for story estimation';
 COMMENT ON COLUMN stories.estimated_date_range_end IS 'End of GPS-correlated date range for story estimation';  
-COMMENT ON COLUMN stories.estimated_date_gps IS 'GPS-correlated estimated date for the story';
+COMMENT ON COLUMN stories.user_assigned_date IS 'User-assigned date for manual story dating (highest accuracy)';
+COMMENT ON COLUMN stories.collection_default_date IS 'Collection-based fallback date estimate';
 COMMENT ON COLUMN stories.regional_tags IS 'GPS-derived regional tags (separate from manual tags)';
 COMMENT ON COLUMN stories.tag_source IS 'Source of tags: gps_estimated, manual, or mixed';
 COMMENT ON COLUMN stories.date_confidence IS 'Confidence level of date estimation';
@@ -122,7 +130,7 @@ COMMENT ON COLUMN story_collections.expedition_exclude_reason IS 'Reason for exc
 SELECT column_name, data_type, is_nullable, column_default
 FROM information_schema.columns 
 WHERE table_name = 'stories' 
-AND column_name IN ('estimated_date_range_start', 'estimated_date_range_end', 'estimated_date_gps', 'regional_tags', 'tag_source', 'date_confidence')
+AND column_name IN ('estimated_date_range_start', 'estimated_date_range_end', 'user_assigned_date', 'collection_default_date', 'regional_tags', 'tag_source', 'date_confidence')
 ORDER BY ordinal_position;
 
 -- Verify new columns exist in story_collections table

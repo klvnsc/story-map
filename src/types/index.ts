@@ -22,7 +22,28 @@ export interface Story {
   location_confidence?: 'high' | 'medium' | 'low' | 'estimated';
   content_type?: string[];
   tags?: string[];
+  
+  // DATE FIELDS (UPDATED WITH CLEAR NAMES)
+  /** Collection-based default date (fallback estimate) */
+  collection_default_date?: Date;
+  /** User-assigned date (manual input - most accurate) */
+  user_assigned_date?: Date;
+  /** GPS-correlated date range start */
+  estimated_date_range_start?: Date;
+  /** GPS-correlated date range end */
+  estimated_date_range_end?: Date;
+  
+  // LEGACY FIELDS (TO BE REMOVED)
+  /** @deprecated Use collection_default_date instead */
   estimated_date?: Date;
+  /** @deprecated Use user_assigned_date instead */
+  estimated_date_gps?: Date;
+  
+  // METADATA FIELDS
+  /** Confidence level: 'manual' = user input (highest), 'collection_estimated' = fallback */
+  date_confidence?: 'manual' | 'collection_estimated' | 'high' | 'medium' | 'low';
+  /** Source of tags: 'manual' = user input, 'gps_estimated' = computed */
+  tag_source?: string;
   time_added?: string;
 }
 

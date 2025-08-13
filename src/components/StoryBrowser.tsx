@@ -14,7 +14,9 @@ interface Story {
   location_name?: string;
   latitude?: number;
   longitude?: number;
-  estimated_date?: string;
+  collection_default_date?: string;
+  user_assigned_date?: string;
+  estimated_date?: string; // Legacy support
   collection_id: string;
   collection?: {
     name: string;
@@ -104,6 +106,8 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
             location_name,
             latitude,
             longitude,
+            collection_default_date,
+            user_assigned_date,
             estimated_date,
             collection_id
           `);
@@ -144,7 +148,7 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
             .map(col => col.id) || [];
           
           // Only filter by collection if we have region/phase filters OR search matches collections
-          shouldFilterByCollection = !!filters.region || !!filters.phase || (filters.search && filteredCollectionIds.length > 0);
+          shouldFilterByCollection = Boolean(filters.region) || Boolean(filters.phase) || (Boolean(filters.search) && filteredCollectionIds.length > 0);
         }
         
         // Apply collection-based filtering or location search
@@ -380,7 +384,7 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
                       </div>
                       
                       <video
-                        src={getProxiedImageUrl(story.cdn_url, false, true)}
+                        src={getProxiedImageUrl(story.cdn_url)}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                         muted
                         playsInline
@@ -414,7 +418,7 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
                       </div>
                       
                       <img
-                        src={getProxiedImageUrl(story.cdn_url, false, false)}
+                        src={getProxiedImageUrl(story.cdn_url)}
                         alt={`Story ${story.story_index}`}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                         loading="lazy"
