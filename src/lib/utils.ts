@@ -2,14 +2,14 @@
  * Utility functions for the story map application
  */
 
+import { Story } from '@/types';
+
 /**
  * Convert Instagram CDN URLs to use proxy to avoid CORS issues
  * @param url - The Instagram CDN URL 
- * @param preferDirect - Try direct URL first for better performance (ignored for images due to CORS)
- * @param isVideo - Whether this is a video (videos can work direct)
  * @returns Proxied URL that bypasses CORS restrictions
  */
-export function getProxiedImageUrl(url: string, _preferDirect: boolean = false, _isVideo: boolean = false): string {
+export function getProxiedImageUrl(url: string): string {
   if (!url) return url;
   
   // Check if it's an Instagram CDN URL that needs proxying
@@ -52,4 +52,120 @@ export function formatDate(dateString: string): string {
 export function truncateText(text: string, maxLength: number): string {
   if (!text || text.length <= maxLength) return text;
   return text.substring(0, maxLength) + '...';
+}
+
+// =============================================================================
+// DATE UTILITIES
+// =============================================================================
+
+/**
+ * Get the best available date for a story with proper precedence
+ * 
+ * **Priority Order:**
+ * 1. user_assigned_date (manual input) - HIGHEST ACCURACY
+ * 2. collection_default_date (collection estimate) - MEDIUM ACCURACY
+ * 3. Legacy fields (for backward compatibility)
+ * 
+ * @param story - The story object
+ * @returns Date object or null if no date available
+ */
+export function getBestAvailableDate(story: Story): Date | null {
+  // Priority 1: User-assigned date (manual input, most accurate)
+  if (story.user_assigned_date) {
+    return new Date(story.user_assigned_date);
+  }
+  
+  // Priority 2: Collection default date (fallback estimate)
+  if (story.collection_default_date) {
+    return new Date(story.collection_default_date);
+  }
+  
+  // Legacy support (during transition period)
+  if (story.estimated_date_gps) {
+    return new Date(story.estimated_date_gps);
+  }
+  
+  if (story.estimated_date) {
+    return new Date(story.estimated_date);
+  }
+  
+  return null;
+}
+
+/**
+ * Get the best available date as ISO string for sorting
+ * @param story - The story object
+ * @returns ISO date string or fallback for sorting
+ */
+export function getBestAvailableDateString(story: Story): string {
+  const date = getBestAvailableDate(story);
+  return date ? date.toISOString() : '1970-01-01T00:00:00.000Z';
+}
+
+/**
+ * Get date confidence level for a story
+ * @param story - The story object
+ * @returns Confidence level based on data source
+ */
+export function getDateConfidenceLevel(story: Story): 'high' | 'medium' | 'low' {
+  // Manual user input = highest confidence
+  if (story.user_assigned_date && story.date_confidence === 'manual') {
+    return 'high';
+  }
+  
+  // Collection estimated date = medium confidence
+  if (story.collection_default_date && story.date_confidence === 'collection_estimated') {
+    return 'medium';
+  }
+  
+  // Legacy support
+  if (story.estimated_date_gps && story.date_confidence === 'manual') {
+    return 'high';
+  }
+  
+  if (story.estimated_date && story.date_confidence === 'collection_estimated') {
+    return 'medium';
+  }
+  
+  // Any other case = low confidence
+  return 'low';
+}
+
+/**
+ * Check if story uses manual date (user-assigned)
+ * @param story - The story object
+ * @returns True if story has manual date
+ */
+export function hasManualDate(story: Story): boolean {
+  return !!(
+    (story.user_assigned_date && story.tag_source === 'manual') ||
+    // Legacy support
+    (story.estimated_date_gps && story.tag_source === 'manual')
+  );
+}
+
+// =============================================================================
+// FIELD NAME ALIASES (for clarity)
+// =============================================================================
+
+/**
+ * Get user-assigned date (manual input)
+ * @param story - The story object
+ * @returns User-assigned date or null
+ */
+export function getUserAssignedDate(story: Story): Date | null {
+  // Use new field first, fallback to legacy
+  return story.user_assigned_date ? new Date(story.user_assigned_date) : 
+         story.estimated_date_gps ? new Date(story.estimated_date_gps) : null;
+}
+
+/**
+ * Get collection default date (automatic estimate)
+ * @param story - The story object  
+ * @returns Collection default date or null
+ */
+export function getCollectionDefaultDate(story: Story): Date | null {
+  // Use new field first, fallback to legacy
+  return story.collection_default_date ? new Date(story.collection_default_date) : 
+         story.estimated_date ? new Date(story.estimated_date) : null;
 }
