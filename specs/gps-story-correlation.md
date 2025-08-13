@@ -42,15 +42,22 @@ Story → Collection → Estimated Date → GPS Track Period → Regional Tags
 
 Based on GPS track analysis from `data-cy-gps/garmin.md`:
 
-### Collection Index to GPS Track Mapping
+### **⚠️ CORRECTED EXPEDITION MAPPING (Collections 1-51 Only)**
 
-| Collection Range | Estimated Date Range | GPS Tracks | Regional Tags |
-|------------------|---------------------|------------|---------------|
-| 1-15 | June-July 2025 | Tracks 25-29 | ["UK", "England", "Scotland", "Wales"] |
-| 16-35 | March-May 2025 | Tracks 20-24 | ["Europe", "Germany", "France", "Channel"] |
-| 36-45 | January-March 2025 | Tracks 19-20 | ["Africa", "Morocco", "Mediterranean"] |
-| 46-55 | August-December 2024 | Tracks 9-14 | ["Central Asia", "Middle East", "Turkey"] |
-| 56-61 | June-August 2024 | Tracks 3-8 | ["North China", "Central Asia", "Mongolia"] |
+**13-Month Land Rover Expedition Collections:**
+
+| Collection Range | Estimated Date Range | GPS Tracks | Regional Tags | Expedition Phase |
+|------------------|---------------------|------------|---------------|------------------|
+| 1-15 | May-July 2025 | Tracks 25-29 | ["UK", "England", "Scotland", "Wales"] | uk_scotland |
+| 16-35 | March-May 2025 | Tracks 20-24 | ["Europe", "Germany", "France", "Mediterranean"] | europe_mediterranean |
+| 36-45 | October 2024-March 2025 | Tracks 10-19 | ["Africa", "Morocco", "Middle East", "Turkey"] | middle_east_caucasus |
+| 46-51 | July-October 2024 | Tracks 3-9 | ["Central Asia", "Kazakhstan", "Kyrgyzstan"] | central_asia |
+
+**⚠️ EXCLUDED: Collections 52-61 (Pre-Expedition Content)**
+- **Collections 52-61**: Pre-expedition content (Q&A, Mongolia, Japan cycling, Indonesia, India/Ladakh)
+- **NOT part of 13-month Land Rover expedition**  
+- **No GPS correlation applicable**
+- **Reason**: Content occurred before expedition start (July 2024)
 
 ### Key GPS Track References
 
@@ -93,8 +100,9 @@ Based on GPS track analysis from `data-cy-gps/garmin.md`:
 
 ### Stories Table Updates
 ```sql
--- Add estimated date based on collection chronology
-ALTER TABLE stories ADD COLUMN estimated_date_gps TIMESTAMP WITH TIME ZONE;
+-- Add date fields with clear naming
+ALTER TABLE stories ADD COLUMN user_assigned_date TIMESTAMP WITH TIME ZONE;
+ALTER TABLE stories ADD COLUMN collection_default_date TIMESTAMP WITH TIME ZONE;
 
 -- Add regional tags from GPS correlation  
 ALTER TABLE stories ADD COLUMN regional_tags TEXT[];
@@ -104,7 +112,8 @@ ALTER TABLE stories ADD COLUMN tag_source VARCHAR(20) DEFAULT 'gps_estimated';
 -- Options: 'gps_estimated', 'manual', 'mixed'
 
 -- Add indexing for performance
-CREATE INDEX idx_stories_estimated_date_gps ON stories(estimated_date_gps);
+CREATE INDEX idx_stories_user_assigned_date ON stories(user_assigned_date);
+CREATE INDEX idx_stories_collection_default_date ON stories(collection_default_date);
 CREATE INDEX idx_stories_regional_tags ON stories USING GIN(regional_tags);
 ```
 

@@ -49,6 +49,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **stories**: 4,438 individual stories with collection references  
 - **gps_waypoints**: 9,731 GPS points from 29 expedition tracks
 
+## ⚠️ Database Field Naming Status
+
+**Current Implementation** (TypeScript Code):
+- `user_assigned_date`: Manual user input (highest accuracy)
+- `collection_default_date`: Collection-based fallback estimate
+
+**Database Schema** (Supabase):  
+- `estimated_date_gps`: Contains manual user input → mapped to `user_assigned_date`
+- `estimated_date`: Contains collection estimates → mapped to `collection_default_date`
+
+**Date Precedence Logic**: Use `getBestAvailableDate()` utility function for proper field precedence handling across the transition period.
+
 ## Architecture & Key Patterns
 
 ### Type System
