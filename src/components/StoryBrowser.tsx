@@ -539,17 +539,12 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
                   </div>
                   
                   {/* Display regional tags from unified tag system */}
-                  {/* TEMPORARILY HIDDEN - TODO: Re-enable when tag system is finalized */}
-                  {/* {story.tags_unified && getRegionalTags(story.tags_unified).length > 0 ? (
+                  {story.tags_unified && getRegionalTags(story.tags_unified).length > 0 ? (
                     <div className="flex flex-wrap gap-1 mt-1">
                       {getRegionalTags(story.tags_unified).slice(0, 3).map((tag, index) => (
                         <span
-                          key={`${tag.name}-${index}`}
-                          className={`text-xs px-1.5 py-0.5 rounded-full ${
-                            tag.source === 'gps' 
-                              ? 'bg-blue-50 text-blue-700 border border-blue-200' 
-                              : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                          }`}
+                          key={`${tag.name}-${tag.source}-${index}`}
+                          className="text-xs px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200"
                           title={`${tag.source === 'gps' ? 'GPS-suggested' : 'Manual'}: ${tag.name}`}
                         >
                           {tag.source === 'gps' ? '📍' : '✏️'} {tag.name}
@@ -561,8 +556,7 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
                         </span>
                       )}
                     </div>
-                  ) : story.collection?.region ? ( */}
-                  {story.collection?.region ? (
+                  ) : story.collection?.region ? (
                     // Fallback to collection region if no unified tags
                     <div className="text-xs text-gray-400 truncate mt-1">
                       📍 {story.collection.region}

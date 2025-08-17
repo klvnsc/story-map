@@ -4,7 +4,18 @@ import { useEffect, useState, useRef } from 'react';
 import Map, { Marker, Popup, Source, Layer, type MapRef } from 'react-map-gl/mapbox';
 import { supabase } from '@/lib/supabase';
 import { Story } from '@/types';
-import { getProxiedImageUrl, getBestAvailableDateString, getBestAvailableDate } from '@/lib/utils';
+
+// Extended Story type for MapView with nested collection data
+interface StoryWithCollection extends Story {
+  story_collections?: {
+    name?: string;
+    expedition_phase?: string;
+    collection_index?: number;
+    is_expedition_scope?: boolean;
+    collection_start_date?: string;
+  };
+}
+import { getProxiedImageUrl, getBestAvailableDateString, getBestAvailableDate, getExpeditionPhaseForDate } from '@/lib/utils';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface ExpeditionTrack {
@@ -19,13 +30,13 @@ interface ExpeditionTrack {
 }
 
 interface MapViewProps {
-  selectedCollectionId?: string;
+  selectedPhase?: string;
 }
 
-export default function MapView({ selectedCollectionId }: MapViewProps) {
-  const [stories, setStories] = useState<Story[]>([]);
+export default function MapView({ selectedPhase }: MapViewProps) {
+  const [allStories, setAllStories] = useState<StoryWithCollection[]>([]);
   const [expeditionTracks, setExpeditionTracks] = useState<ExpeditionTrack[]>([]);
-  const [selectedStory, setSelectedStory] = useState<Story | null>(null);
+  const [selectedStory, setSelectedStory] = useState<StoryWithCollection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [viewState, setViewState] = useState({
     longitude: 20, // Central Europe/Asia view
@@ -35,34 +46,37 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
 
   const mapRef = useRef<MapRef | null>(null);
 
+  // Filter stories based on selected phase (client-side filtering)
+  const filteredStories = selectedPhase 
+    ? allStories.filter(story => {
+        const storyWithCollection = story as Story & { story_collections?: { expedition_phase?: string } };
+        return storyWithCollection.story_collections?.expedition_phase === selectedPhase;
+      })
+    : allStories;
+
   // Determine expedition phase for a story (prioritize individual GPS data over collection data)
-  const getStoryExpeditionPhase = (story: Story & { 
-    story_collections?: { expedition_phase?: string };
-  }): string => {
-    // If story has manual user-assigned date, calculate phase from date
-    const manualDate = story.user_assigned_date || story.estimated_date_gps; // Support both new and legacy fields
+  const getStoryExpeditionPhase = (story: StoryWithCollection): string => {
+    // If story has manual user-assigned date, calculate phase from date using dynamic manifest data
+    const storyWithDates = story as Story & { 
+      user_assigned_date?: string; 
+      estimated_date_gps?: string; 
+      story_collections?: { expedition_phase?: string };
+    };
+    const manualDate = storyWithDates.user_assigned_date || storyWithDates.estimated_date_gps; // Support both new and legacy fields
     if (manualDate && story.tag_source === 'manual') {
       const date = new Date(manualDate);
-      const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
       
-      // Map dates to expedition phases (matches GPS correlation logic)
-      if (dateStr >= '2025-05-25' && dateStr <= '2025-07-02') return 'uk_scotland';
-      if (dateStr >= '2025-03-14' && dateStr <= '2025-05-25') return 'europe_mediterranean';
-      if (dateStr >= '2024-10-17' && dateStr <= '2025-03-12') return 'middle_east_caucasus';
-      if (dateStr >= '2024-07-01' && dateStr <= '2024-10-16') return 'central_asia';
-      
-      // Pre-expedition or post-expedition
-      if (dateStr < '2024-07-01') return 'pre_expedition';
-      if (dateStr > '2025-07-02') return 'post_expedition';
+      // Use dynamic expedition phase detection from collections-manifest.json
+      return getExpeditionPhaseForDate(date);
     }
     
     // Fall back to collection expedition phase
     return story.story_collections?.expedition_phase || 'unknown';
   };
 
-  // Load stories with locations
-  const loadStoriesWithLocations = async () => {
-    let query = supabase
+  // Load ALL stories with locations (no filtering - do this once)
+  const loadAllStoriesWithLocations = async () => {
+    const { data, error } = await supabase
       .from('stories')
       .select(`
         *,
@@ -70,24 +84,20 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
           name,
           expedition_phase,
           collection_index,
-          is_expedition_scope
+          is_expedition_scope,
+          collection_start_date
         )
       `)
       .not('latitude', 'is', null)
-      .not('longitude', 'is', null);
-
-    if (selectedCollectionId) {
-      query = query.eq('collection_id', selectedCollectionId);
-    }
-
-    const { data, error } = await query.order('user_assigned_date', { ascending: true, nullsFirst: false });
+      .not('longitude', 'is', null)
+      .order('user_assigned_date', { ascending: true, nullsFirst: false });
 
     if (error) {
       console.error('Error loading stories:', error);
       return;
     }
 
-    setStories(data || []);
+    setAllStories(data || []);
   };
 
   // Load expedition tracks for context
@@ -109,23 +119,23 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
     const loadData = async () => {
       setIsLoading(true);
       await Promise.all([
-        loadStoriesWithLocations(),
+        loadAllStoriesWithLocations(),
         loadExpeditionTracks()
       ]);
       setIsLoading(false);
     };
 
     loadData();
-  }, [selectedCollectionId]);
+  }, []); // Only load once on mount
 
   // Fit map to show all stories
   useEffect(() => {
-    if (stories.length > 0 && mapRef.current) {
+    if (filteredStories.length > 0 && mapRef.current) {
       // Calculate bounds manually
       let minLng = Infinity, maxLng = -Infinity;
       let minLat = Infinity, maxLat = -Infinity;
       
-      stories.forEach(story => {
+      filteredStories.forEach(story => {
         if (story.latitude && story.longitude) {
           minLng = Math.min(minLng, story.longitude);
           maxLng = Math.max(maxLng, story.longitude);
@@ -150,29 +160,25 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
         });
       }
     }
-  }, [stories]);
+  }, [filteredStories]);
 
   const getMarkerColor = (expeditionPhase: string) => {
     const colors = {
-      // Updated phase names (GPS correlation format)
-      'uk_scotland': '#8B5CF6',      // Purple
-      'europe_mediterranean': '#3B82F6', // Blue  
-      'middle_east_caucasus': '#F59E0B', // Amber
-      'central_asia': '#10B981',     // Emerald
-      'pre_expedition': '#6B7280',   // Gray
-      'post_expedition': '#374151',  // Dark Gray
-      
-      // Legacy phase names (for backward compatibility)
-      'scotland': '#8B5CF6',         // Purple
-      'europe': '#3B82F6',           // Blue  
-      'africa': '#EF4444',           // Red
-      'middle_east': '#F59E0B',      // Amber
-      'north_china': '#EC4899'       // Pink
+      // Expedition phases from collections-manifest.json
+      'pre_expedition': '#6B7280',           // Gray
+      'north_china': '#EC4899',              // Pink  
+      'central_asia': '#10B981',             // Emerald
+      'middle_east_caucasus': '#F59E0B',     // Amber
+      'europe_part1': '#3B82F6',             // Blue
+      'africa': '#EF4444',                   // Red
+      'europe_uk_scotland': '#8B5CF6',       // Purple
+      'post_expedition': '#374151',          // Dark Gray
+      'unknown': '#6B7280',                  // Gray    
     };
     return colors[expeditionPhase as keyof typeof colors] || '#6B7280';
   };
 
-  const handleStoryClick = (story: Story) => {
+  const handleStoryClick = (story: StoryWithCollection) => {
     setSelectedStory(story);
     if (story.latitude && story.longitude) {
       setViewState({
@@ -193,7 +199,7 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
   }
 
   // Show message when no stories have locations yet
-  const hasStoriesWithLocations = stories.length > 0;
+  const hasStoriesWithLocations = filteredStories.length > 0;
 
   return (
     <div className="h-full relative">
@@ -206,7 +212,7 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
         style={{ width: '100%', height: '100%' }}
       >
         {/* Story Markers */}
-        {stories.map((story) => (
+        {filteredStories.map((story) => (
           <Marker
             key={story.id}
             longitude={story.longitude!}
@@ -226,7 +232,7 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
         ))}
 
         {/* Trip Route Line */}
-        {stories.length > 1 && (
+        {filteredStories.length > 1 && (
           <Source
             type="geojson" 
             data={{
@@ -234,11 +240,14 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
               properties: {},
               geometry: {
                 type: 'LineString',
-                coordinates: stories
+                coordinates: filteredStories
                   .filter(s => s.latitude != null && s.longitude != null)
                   .sort((a, b) => {
-                    const dateA = getBestAvailableDateString(a);
-                    const dateB = getBestAvailableDateString(b);
+                    // Transform story data to match getBestAvailableDate expectation
+                    const storyA = { ...a, collection: a.story_collections };
+                    const storyB = { ...b, collection: b.story_collections };
+                    const dateA = getBestAvailableDateString(storyA);
+                    const dateB = getBestAvailableDateString(storyB);
                     return dateA.localeCompare(dateB);
                   })
                   .map(s => [s.longitude!, s.latitude!])
@@ -307,7 +316,9 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
               <div className="flex justify-between items-center text-xs text-gray-500">
                 <span>{selectedStory.media_type}</span>
                 {(() => {
-                  const bestDate = getBestAvailableDate(selectedStory);
+                  // Transform story data to match getBestAvailableDate expectation
+                  const storyWithCollection = { ...selectedStory, collection: selectedStory.story_collections };
+                  const bestDate = getBestAvailableDate(storyWithCollection);
                   return bestDate ? (
                     <span>{bestDate.toLocaleDateString()}</span>
                   ) : null;
@@ -319,32 +330,36 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
       </Map>
 
       {/* Legend */}
-      <div className="absolute top-4 right-4 bg-white p-3 rounded-lg shadow-lg text-sm">
+      <div className="absolute top-4 right-4 bg-white p-3 rounded-lg shadow-lg text-sm max-w-xs">
         <h4 className="font-semibold mb-2">Expedition Phases</h4>
         <div className="space-y-1">
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 rounded-full bg-purple-500" />
-            <span>Scotland</span>
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#EC4899' }} />
+            <span>North China</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 rounded-full bg-blue-500" />
-            <span>Europe</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 rounded-full bg-red-500" />
-            <span>Africa</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 rounded-full bg-amber-500" />
-            <span>Middle East</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 rounded-full bg-emerald-500" />
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#10B981' }} />
             <span>Central Asia</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 rounded-full bg-pink-500" />
-            <span>North China</span>
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#F59E0B' }} />
+            <span>Middle East & Caucasus</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#3B82F6' }} />
+            <span>Europe Part 1</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#EF4444' }} />
+            <span>Africa</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#8B5CF6' }} />
+            <span>Europe & UK/Scotland</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#6B7280' }} />
+            <span>Pre/Post Expedition</span>
           </div>
         </div>
       </div>
@@ -372,13 +387,13 @@ export default function MapView({ selectedCollectionId }: MapViewProps) {
       {/* Stats */}
       <div className="absolute bottom-4 left-4 bg-white p-3 rounded-lg shadow-lg text-sm">
         <div className="space-y-1">
-          <div>📍 <strong>{stories.length}</strong> stories with locations</div>
+          <div>📍 <strong>{filteredStories.length}</strong> stories with locations</div>
           <div>🛣️ <strong>{expeditionTracks.length}</strong> expedition tracks</div>
           <div>📊 <strong>{expeditionTracks.reduce((sum, track) => sum + (track.gps_point_count || 0), 0)}</strong> total GPS points</div>
           <div>🌍 <strong>{expeditionTracks.reduce((sum, track) => sum + (track.distance_km || 0), 0).toFixed(0)}</strong> km total distance</div>
-          {selectedCollectionId && (
+          {selectedPhase && (
             <div className="text-xs text-gray-500 mt-2">
-              Filtered by collection
+              Filtered by expedition phase: {selectedPhase}
             </div>
           )}
         </div>

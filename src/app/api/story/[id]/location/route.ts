@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { validateCoordinates } from '@/lib/gps-correlation'
+import { getRegionalTags, createTag, addTag, unifiedTagsToLegacy, TagWithMetadata } from '@/lib/tags'
 
 // Story Location Update API Endpoint
 // PUT /api/story/{id}/location
@@ -13,7 +14,7 @@ interface StoryLocationUpdateRequest {
   
   // GPS correlation fields
   user_assigned_date?: string // ISO timestamp (manual user input)
-  regional_tags?: string[]
+  regional_tags?: string[] // Legacy format - converted to unified tags internally
   tag_source?: 'manual' | null
   
   // Manual tags (separate from regional)
@@ -126,17 +127,45 @@ export async function PUT(
     
     // GPS correlation fields
     if (body.user_assigned_date !== undefined) updateData.user_assigned_date = body.user_assigned_date
-    if (body.regional_tags !== undefined) updateData.regional_tags = body.regional_tags
     if (body.tag_source !== undefined) updateData.tag_source = body.tag_source
     
-    // Handle combined tags (regional + manual)
+    // Handle unified tags - convert legacy regional_tags to unified format
     if (body.regional_tags || body.manual_tags) {
-      const regionalTags = body.regional_tags || currentStory.regional_tags || []
-      const manualTags = body.manual_tags || []
+      let currentUnifiedTags: TagWithMetadata[] = currentStory.tags_unified || []
       
-      // Combine regional and manual tags, removing duplicates
-      const combinedTags = [...new Set([...regionalTags, ...manualTags])]
-      updateData.tags = combinedTags
+      // If regional_tags provided, update regional tags in unified format
+      if (body.regional_tags !== undefined) {
+        // Remove existing regional tags
+        currentUnifiedTags = currentUnifiedTags.filter(tag => tag.type !== 'regional')
+        
+        // Add new regional tags
+        body.regional_tags.forEach(tagName => {
+          const newTag = createTag(tagName, 'regional', 'manual')
+          currentUnifiedTags = addTag(currentUnifiedTags, newTag)
+        })
+      }
+      
+      // If manual_tags provided, update activity tags  
+      if (body.manual_tags !== undefined) {
+        // Remove existing manual activity tags
+        currentUnifiedTags = currentUnifiedTags.filter(tag => 
+          !(tag.type === 'activity' && tag.source === 'manual')
+        )
+        
+        // Add new manual activity tags
+        body.manual_tags.forEach(tagName => {
+          const newTag = createTag(tagName, 'activity', 'manual')
+          currentUnifiedTags = addTag(currentUnifiedTags, newTag)
+        })
+      }
+      
+      // Update unified tags
+      updateData.tags_unified = currentUnifiedTags
+      
+      // Update legacy fields for backward compatibility
+      const regionalTags = getRegionalTags(currentUnifiedTags)
+      updateData.regional_tags = unifiedTagsToLegacy(regionalTags)
+      updateData.tags = unifiedTagsToLegacy(currentUnifiedTags)
     }
 
     // Update the story
@@ -150,6 +179,7 @@ export async function PUT(
         latitude,
         longitude,
         location_confidence,
+        tags_unified,
         regional_tags,
         tags,
         tag_source,
@@ -166,6 +196,10 @@ export async function PUT(
       }, { status: 500 })
     }
 
+    // Generate legacy fields from unified tags for response
+    const unifiedTags: TagWithMetadata[] = updatedStory.tags_unified || []
+    const regionalTags = getRegionalTags(unifiedTags)
+    
     const response: StoryLocationUpdateResponse = {
       success: true,
       data: {
@@ -174,8 +208,8 @@ export async function PUT(
         latitude: updatedStory.latitude ? parseFloat(updatedStory.latitude) : null,
         longitude: updatedStory.longitude ? parseFloat(updatedStory.longitude) : null,
         location_confidence: updatedStory.location_confidence,
-        regional_tags: updatedStory.regional_tags || [],
-        tags: updatedStory.tags || [],
+        regional_tags: unifiedTagsToLegacy(regionalTags),
+        tags: unifiedTagsToLegacy(unifiedTags),
         tag_source: updatedStory.tag_source,
         estimated_date_gps: updatedStory.user_assigned_date,
         updated_at: updatedStory.updated_at

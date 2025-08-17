@@ -1,6 +1,8 @@
 // GPS Correlation Service Utilities
 // Handles GPS track correlation and regional tag generation
 
+import { createTag, TagWithMetadata } from '@/lib/tags'
+
 export interface GPSCorrelationData {
   track_number: number
   track_title: string
@@ -11,7 +13,7 @@ export interface GPSCorrelationData {
   expedition_phase: string
   region: string
   cities: string[]
-  regional_tags: string[]
+  regional_tags: TagWithMetadata[]
   classification: 'moving' | 'rest'
   distance_km?: number
   confidence: 'high' | 'medium' | 'low'
@@ -32,31 +34,51 @@ export interface StoryGPSContext {
   tag_source?: string
 }
 
-// Collection-to-GPS-Track mapping (matches API endpoint)
+// Collection-to-GPS-Track mapping (based on collections-manifest.json)
+// NEW: Collections in ASCENDING chronological order (1=earliest, 61=latest)
 export const EXPEDITION_COLLECTION_MAPPING = {
-  uk_scotland: { 
-    collection_range: [1, 15], 
-    tracks: [25, 26, 27, 28, 29],
-    date_range: { start: "2025-05-25", end: "2025-07-02" },
-    regions: ["Wales", "England", "Scotland", "UK", "Britain"]
+  pre_expedition: {
+    collection_range: [1, 8],
+    tracks: [], // No GPS tracking for pre-expedition content
+    date_range: { start: "2022-06-01", end: "2023-12-31" },
+    regions: ["India", "Indonesia", "Japan"],
+    excluded: true // Not part of main expedition
   },
-  europe_mediterranean: { 
-    collection_range: [16, 35], 
-    tracks: [20, 21, 22, 23, 24],
-    date_range: { start: "2025-03-14", end: "2025-05-25" },
-    regions: ["Germany", "Morocco", "Spain", "France", "Italy", "Greece", "Bulgaria", "Mediterranean", "Europe"]
-  },
-  middle_east_caucasus: { 
-    collection_range: [36, 45], 
-    tracks: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-    date_range: { start: "2024-10-17", end: "2025-03-12" },
-    regions: ["Georgia", "Armenia", "Turkey", "Middle East", "Caucasus"]
+  north_china: {
+    collection_range: [9, 11],
+    tracks: [1, 2], // Limited GPS data for expedition preparation
+    date_range: { start: "2024-02-24", end: "2024-07-20" },
+    regions: ["Mongolia", "China"]
   },
   central_asia: { 
-    collection_range: [46, 51], 
+    collection_range: [12, 21], 
     tracks: [3, 4, 5, 6, 7, 8, 9],
-    date_range: { start: "2024-07-01", end: "2024-10-16" },
-    regions: ["Tajikistan", "Russia", "Kazakhstan", "Uzbekistan", "Kyrgyzstan", "Central Asia"]
+    date_range: { start: "2024-07-18", end: "2024-09-25" },
+    regions: ["Kyrgyzstan", "Kazakhstan", "Uzbekistan", "Russia", "Tajikistan", "Central Asia"]
+  },
+  middle_east_caucasus: { 
+    collection_range: [22, 30], 
+    tracks: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+    date_range: { start: "2024-10-06", end: "2024-11-27" },
+    regions: ["Georgia", "Armenia", "Turkey", "Middle East", "Caucasus"]
+  },
+  europe_part1: { 
+    collection_range: [31, 41], 
+    tracks: [20, 21, 22, 23, 24],
+    date_range: { start: "2024-12-06", end: "2025-02-07" },
+    regions: ["Bulgaria", "Greece", "Italy", "France", "Spain", "Europe"]
+  },
+  africa: {
+    collection_range: [42, 50],
+    tracks: [25, 26], // Limited GPS data for Africa segment
+    date_range: { start: "2025-01-17", end: "2025-04-06" },
+    regions: ["Morocco", "Africa"]
+  },
+  europe_uk_scotland: { 
+    collection_range: [51, 61], 
+    tracks: [27, 28, 29],
+    date_range: { start: "2025-04-24", end: "2025-07-31" },
+    regions: ["Germany", "England", "Wales", "Scotland", "UK", "Britain"]
   }
 } as const
 
@@ -102,27 +124,32 @@ export function getExpeditionPhaseByCollection(collectionIndex: number): keyof t
 }
 
 /**
- * Check if a collection is within expedition scope (Collections 1-51)
+ * Check if a collection is within expedition scope (Collections 9-61)
+ * Collections 1-8 are pre-expedition content (excluded)
  */
 export function isExpeditionCollection(collectionIndex: number): boolean {
-  return collectionIndex >= 1 && collectionIndex <= 51
+  return collectionIndex >= 9 && collectionIndex <= 61
 }
 
 /**
  * Get suggested regional tags for a collection
  */
-export function getSuggestedRegionalTags(collectionIndex: number): string[] {
+export function getSuggestedRegionalTags(collectionIndex: number): TagWithMetadata[] {
   if (!isExpeditionCollection(collectionIndex)) {
     return []
   }
   
   const phase = getExpeditionPhaseByCollection(collectionIndex)
-  return phase ? [...EXPEDITION_COLLECTION_MAPPING[phase].regions] : []
+  if (!phase) return []
+  
+  return EXPEDITION_COLLECTION_MAPPING[phase].regions.map(regionName => 
+    createTag(regionName, 'regional', 'gps')
+  )
 }
 
 /**
  * Estimate story date based on collection chronology
- * Collections are in DESCENDING order (1=latest, 61=earliest)
+ * Collections are in ASCENDING chronological order (1=earliest, 61=latest)
  */
 export function estimateStoryDate(
   collectionIndex: number, 
@@ -140,11 +167,9 @@ export function estimateStoryDate(
   const collectionProgress = (collectionIndex - phaseConfig.collection_range[0]) / 
     (phaseConfig.collection_range[1] - phaseConfig.collection_range[0])
   
-  // Since collections are in DESCENDING order, invert the progress
-  const invertedProgress = 1 - collectionProgress
-  
+  // Collections are now in ASCENDING order, so no need to invert
   const phaseDuration = phaseEnd.getTime() - phaseStart.getTime()
-  const estimatedTime = phaseStart.getTime() + (phaseDuration * invertedProgress)
+  const estimatedTime = phaseStart.getTime() + (phaseDuration * collectionProgress)
   
   // If story index is provided, add sub-collection timing
   if (storyIndexInCollection && totalStoriesInCollection && totalStoriesInCollection > 1) {
@@ -166,7 +191,7 @@ export async function getStoryGPSContext(
 ): Promise<{
   gps_suggestions?: GPSCorrelationData
   estimated_date?: string
-  suggested_regional_tags: string[]
+  suggested_regional_tags: TagWithMetadata[]
   confidence: 'high' | 'medium' | 'low'
 }> {
   // Check if collection is excluded

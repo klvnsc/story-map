@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { isAuthenticated, getCurrentUser } from '@/lib/auth';
 import Navigation from '@/components/Navigation';
 import { supabase } from '@/lib/supabase';
-import { getProxiedImageUrl } from '@/lib/utils';
+import { getProxiedImageUrl, getBestAvailableDate, getBestAvailableDateString, getDateConfidenceLevel } from '@/lib/utils';
 import { 
   getStoryGPSContext, 
   cacheLastManualDate,
@@ -14,7 +14,7 @@ import {
   type GPSCorrelationData 
 } from '@/lib/gps-correlation';
 import { TagWithMetadata } from '@/types';
-import { getRegionalTags, unifiedTagsToLegacy, legacyTagsToUnified, createTag } from '@/lib/tags';
+import { getRegionalTags, unifiedTagsToLegacy, legacyTagsToUnified } from '@/lib/tags';
 import RegionalTagInput from '@/components/RegionalTagInput';
 
 interface Story {
@@ -79,7 +79,7 @@ export default function StoryDetail() {
   // GPS suggestions state
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsSuggestions, setGpsSuggestions] = useState<GPSCorrelationData | null>(null);
-  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
+  const [suggestedTags, setSuggestedTags] = useState<TagWithMetadata[]>([]);
   const [showGpsSuggestions, setShowGpsSuggestions] = useState(false);
   const [manualTagSourceOverride, setManualTagSourceOverride] = useState<string | null>(null);
 
@@ -204,7 +204,7 @@ export default function StoryDetail() {
         // LEGACY FIELDS (for backward compatibility)
         tags: story.tags || [],
         user_assigned_date: story.user_assigned_date || '',
-        regional_tags: story.regional_tags || []
+        regional_tags: unifiedTagsToLegacy(getRegionalTags(unifiedTags))
       });
     }
   }, [story]);
@@ -220,7 +220,7 @@ export default function StoryDetail() {
           story_id: story.id,
           collection_name: story.collection.name,
           collection_index: story.collection.collection_index,
-          estimated_date: story.user_assigned_date || story.collection?.collection_start_date,
+          estimated_date: getBestAvailableDateString(story),
           current_location: {
             location_name: story.location_name,
             latitude: story.latitude,
@@ -368,8 +368,8 @@ export default function StoryDetail() {
       return 'manual';
     }
     
-    const hasGpsRegional = editForm.regional_tags.length > 0;
-    const hasManualTags = editForm.tags.filter(tag => !editForm.regional_tags.includes(tag)).length > 0;
+    const hasGpsRegional = getRegionalTags(editForm.tags_unified).some(tag => tag.source === 'gps');
+    const hasManualTags = editForm.tags_unified.some(tag => tag.source === 'manual');
     
     if (hasGpsRegional && hasManualTags) return 'mixed';
     if (hasGpsRegional) return 'gps_estimated';
@@ -393,7 +393,7 @@ export default function StoryDetail() {
         // LEGACY FIELDS (for backward compatibility)
         tags: story.tags || [],
         user_assigned_date: story.user_assigned_date || '',
-        regional_tags: story.regional_tags || []
+        regional_tags: unifiedTagsToLegacy(getRegionalTags(unifiedTags))
       });
     }
     setIsEditing(false);
@@ -414,10 +414,8 @@ export default function StoryDetail() {
     
     if (type === 'tags' || type === 'both') {
       setEditForm(prev => {
-        // Create new GPS regional tags from suggestions
-        const newGpsTags = suggestedTags.map(tagName => 
-          createTag(tagName, 'regional', 'gps', 0.9)
-        );
+        // Use GPS regional tags from suggestions (already TagWithMetadata[])
+        const newGpsTags = suggestedTags;
         
         // Merge with existing tags, avoiding duplicates
         const existingTagNames = prev.tags_unified.map(tag => tag.name);
@@ -428,18 +426,16 @@ export default function StoryDetail() {
           ...prev,
           tags_unified: updatedUnifiedTags,
           // Update legacy fields for backward compatibility
-          regional_tags: [...new Set([...prev.regional_tags, ...suggestedTags])],
-          tags: [...new Set([...prev.tags, ...suggestedTags])]
+          regional_tags: unifiedTagsToLegacy(getRegionalTags(updatedUnifiedTags)),
+          tags: unifiedTagsToLegacy(updatedUnifiedTags)
         };
       });
     }
     
     if (type === 'both' && gpsSuggestions) {
       setEditForm(prev => {
-        // Create new GPS regional tags from suggestions
-        const newGpsTags = suggestedTags.map(tagName => 
-          createTag(tagName, 'regional', 'gps', 0.9)
-        );
+        // Use GPS regional tags from suggestions (already TagWithMetadata[])
+        const newGpsTags = suggestedTags;
         
         // Merge with existing tags, avoiding duplicates
         const existingTagNames = prev.tags_unified.map(tag => tag.name);
@@ -451,8 +447,8 @@ export default function StoryDetail() {
           user_assigned_date: gpsSuggestions.date_range.start,
           tags_unified: updatedUnifiedTags,
           // Update legacy fields for backward compatibility
-          regional_tags: [...new Set([...prev.regional_tags, ...suggestedTags])],
-          tags: [...new Set([...prev.tags, ...suggestedTags])]
+          regional_tags: unifiedTagsToLegacy(getRegionalTags(updatedUnifiedTags)),
+          tags: unifiedTagsToLegacy(updatedUnifiedTags)
         };
       });
     }
@@ -771,21 +767,24 @@ export default function StoryDetail() {
                     </div>
                   </div>
 
-                  {(story.user_assigned_date || story.collection?.collection_start_date) && (
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700">
-                        Estimated Date
-                      </label>
-                      <div className="text-sm text-gray-900">
-                        {story.user_assigned_date 
-                          ? formatDisplayDate(story.user_assigned_date)
-                          : story.collection?.collection_start_date 
-                            ? formatDisplayDate(story.collection.collection_start_date)
-                            : 'Not set'
-                        }
+                  {(() => {
+                    const bestDate = getBestAvailableDate(story);
+                    if (!bestDate) return null;
+                    
+                    const confidence = getDateConfidenceLevel(story);
+                    const label = confidence.level === 'high' ? 'Date' : 'Date (estimated)';
+                    
+                    return (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700">
+                          {label}
+                        </label>
+                        <div className="text-sm text-gray-900">
+                          {formatDisplayDate(bestDate.toISOString())}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   <div>
                     <label className="block text-xs font-medium text-gray-700">
@@ -866,8 +865,8 @@ export default function StoryDetail() {
                             <div className="text-xs font-medium text-gray-700 mb-2">Suggested Regional Tags</div>
                             <div className="flex flex-wrap gap-1 mb-2">
                               {suggestedTags.map(tag => (
-                                <span key={tag} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                  {tag}
+                                <span key={`${tag.name}-${tag.source}`} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                  {tag.name}
                                 </span>
                               ))}
                             </div>
@@ -951,10 +950,8 @@ export default function StoryDetail() {
                                   
                                   // Update regional tags based on new date - Unified Tag System
                                   setEditForm(prev => {
-                                    // Create new GPS regional tags from suggestions
-                                    const newGpsTags = gpsContext.suggested_regional_tags.map(tagName => 
-                                      createTag(tagName, 'regional', 'gps', 0.9)
-                                    );
+                                    // Use GPS regional tags from suggestions (already TagWithMetadata[])
+                                    const newGpsTags = gpsContext.suggested_regional_tags;
                                     
                                     // Remove old GPS regional tags and add new ones
                                     const nonGpsRegionalTags = prev.tags_unified.filter(tag => 
@@ -966,10 +963,10 @@ export default function StoryDetail() {
                                       ...prev,
                                       tags_unified: updatedUnifiedTags,
                                       // Update legacy fields for backward compatibility
-                                      regional_tags: gpsContext.suggested_regional_tags,
+                                      regional_tags: unifiedTagsToLegacy(gpsContext.suggested_regional_tags),
                                       tags: [
                                         ...prev.tags.filter(tag => !prev.regional_tags.includes(tag)), // Remove old regional tags
-                                        ...gpsContext.suggested_regional_tags // Add new regional tags
+                                        ...unifiedTagsToLegacy(gpsContext.suggested_regional_tags) // Add new regional tags
                                       ]
                                     };
                                   });
@@ -1045,7 +1042,7 @@ export default function StoryDetail() {
                                   tags_unified: nonRegionalTags,
                                   // Update legacy fields for backward compatibility
                                   regional_tags: [],
-                                  tags: prev.tags.filter(tag => !prev.regional_tags.includes(tag))
+                                  tags: unifiedTagsToLegacy(nonRegionalTags)
                                 };
                               });
                             }}
@@ -1068,7 +1065,7 @@ export default function StoryDetail() {
                           Date Confidence
                         </label>
                         <div className="text-sm text-gray-600">
-                          {story.user_assigned_date ? 'Manually Set' : 'Collection Estimated'}
+                          {getDateConfidenceLevel(story).description}
                         </div>
                       </div>
                     </div>

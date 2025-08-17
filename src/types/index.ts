@@ -15,7 +15,8 @@ export interface StoryCollection {
   expedition_exclude_reason?: string;
   
   
-  // NEW: Regional tags and GPS correlation
+  // LEGACY: Regional tags (for backward compatibility only)
+  /** @deprecated Collections should not have regional_tags. Use story-level tags_unified instead. */
   regional_tags?: string[];
   gps_track_ids?: number[];
 }
@@ -48,22 +49,22 @@ export interface Story {
   // UNIFIED TAG SYSTEM
   tags_unified?: TagWithMetadata[];
   
-  // REGIONAL TAGS (separate from general tags)
+  // LEGACY TAG FIELDS (for backward compatibility only)
+  /** @deprecated Use getRegionalTags(tags_unified) instead. Maintained for API compatibility. */
   regional_tags?: string[];
   
-  // LEGACY TAG FIELDS (for backward compatibility)
-  /** @deprecated Use tags_unified instead */
+  /** @deprecated Use tags_unified instead. Maintained for API compatibility. */
   tags?: string[];
   
   // DATE FIELDS (SIMPLIFIED)
   /** User-assigned date (manual input - highest confidence) */
-  user_assigned_date?: Date;
+  user_assigned_date?: string;
   /** Future: GPS-estimated date (not implemented yet) */
-  gps_estimated_date?: Date;
+  gps_estimated_date?: string;
   
-  // METADATA FIELDS
-  /** Tag source: 'manual' = user input, null = default/auto */
-  tag_source?: 'manual' | null;
+  // LEGACY METADATA FIELDS
+  /** @deprecated Use per-tag source tracking in tags_unified instead. Maintained for API compatibility. */
+  tag_source?: 'manual' | 'gps_estimated' | 'mixed' | 'excluded' | null;
   time_added?: string;
 }
 
