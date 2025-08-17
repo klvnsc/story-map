@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { getProxiedImageUrl, getDirectImageUrl } from '@/lib/utils';
+import { TagWithMetadata } from '@/types';
+import { getRegionalTags } from '@/lib/tags';
 
 interface Story {
   id: string;
@@ -14,10 +16,10 @@ interface Story {
   location_name?: string;
   latitude?: number;
   longitude?: number;
-  collection_default_date?: string;
   user_assigned_date?: string;
-  estimated_date?: string; // Legacy support
   collection_id: string;
+  // UNIFIED TAG SYSTEM
+  tags_unified?: TagWithMetadata[];
   collection?: {
     name: string;
     region?: string;
@@ -31,11 +33,13 @@ interface StoryCollection {
   story_count: number;
   region?: string;
   expedition_phase?: string;
+  collection_index: number;
+  collection_start_date?: string;
 }
 
 interface Filters {
   collection: string;
-  region: string;
+  regionalTag: string; // Filter by regional tags from stories (replaces old region filter)
   phase: string;
   mediaType: string;
   search: string;
@@ -52,15 +56,55 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalStories, setTotalStories] = useState(0);
+  const [availableRegionalTags, setAvailableRegionalTags] = useState<string[]>([]);
   const [filters, setFilters] = useState<Filters>({
     collection: initialCollectionId,
-    region: '',
+    regionalTag: '', // Regional tag filter (replaces old region filter)
     phase: '',
     mediaType: '',
     search: ''
   });
 
   const STORIES_PER_PAGE = 12; // 4 columns x 3 rows for optimal layout
+
+  // Fetch available regional tags from stories
+  useEffect(() => {
+    const fetchRegionalTags = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('stories')
+          .select('tags_unified')
+          .not('tags_unified', 'is', null);
+
+        if (error) throw error;
+
+        const tagSet = new Set<string>();
+        let storiesWithTags = 0;
+        let totalStories = data?.length || 0;
+        
+        data?.forEach(story => {
+          if (story.tags_unified) {
+            storiesWithTags++;
+            const regionalTags = getRegionalTags(story.tags_unified);
+            regionalTags.forEach(tag => tagSet.add(tag.name));
+          }
+        });
+
+        const sortedTags = Array.from(tagSet).sort();
+        setAvailableRegionalTags(sortedTags);
+        console.log('Regional tags discovery:', {
+          totalStories,
+          storiesWithTags,
+          availableTags: sortedTags
+        });
+      } catch (error) {
+        console.error('Error fetching regional tags:', error);
+      }
+    };
+
+    fetchRegionalTags();
+  }, []);
+
 
   // Fetch collections for filtering
   useEffect(() => {
@@ -69,8 +113,8 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
         console.log('Fetching collections...');
         const { data, error } = await supabase
           .from('story_collections')
-          .select('id, name, story_count, region, expedition_phase')
-          .order('name');
+          .select('id, name, story_count, region, expedition_phase, collection_index, collection_start_date')
+          .order('collection_index', { ascending: true });
 
         if (error) {
           console.error('Collections error:', error);
@@ -106,10 +150,9 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
             location_name,
             latitude,
             longitude,
-            collection_default_date,
             user_assigned_date,
-            estimated_date,
-            collection_id
+            collection_id,
+            tags_unified
           `);
 
         // Apply direct story filters first
@@ -120,45 +163,38 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
           baseQuery = baseQuery.eq('media_type', filters.mediaType);
         }
 
+        // Apply regional tag filtering using proper JSONB contains
+        if (filters.regionalTag) {
+          console.log('Applying database filter for regional tag:', filters.regionalTag);
+          // Use proper JSONB containment with string serialization
+          const tagQuery = JSON.stringify([{ 
+            name: filters.regionalTag, 
+            type: "regional" 
+          }]);
+          baseQuery = baseQuery.filter('tags_unified', 'cs', tagQuery);
+        }
+
         // Get collection data separately for better reliability
         const { data: collectionsData } = await supabase
           .from('story_collections')
-          .select('id, name, region, expedition_phase');
+          .select('id, name, region, expedition_phase, collection_index, collection_start_date');
 
         // Create collection lookup map
         const collectionMap = new Map(
           collectionsData?.map(col => [col.id, col]) || []
         );
 
-        // Determine filtering strategy
+        // Apply phase filtering
         let shouldFilterByCollection = false;
         let filteredCollectionIds: string[] = [];
         
-        // If we have region/phase filters OR search term, check collections
-        if (filters.region || filters.phase || filters.search) {
+        if (filters.phase) {
           filteredCollectionIds = collectionsData
-            ?.filter(col => {
-              if (filters.region && col.region !== filters.region) return false;
-              if (filters.phase && col.expedition_phase !== filters.phase) return false;
-              if (filters.search) {
-                return col.name?.toLowerCase().includes(filters.search.toLowerCase());
-              }
-              return true;
-            })
+            ?.filter(col => col.expedition_phase === filters.phase)
             .map(col => col.id) || [];
           
-          // Only filter by collection if we have region/phase filters OR search matches collections
-          shouldFilterByCollection = Boolean(filters.region) || Boolean(filters.phase) || (Boolean(filters.search) && filteredCollectionIds.length > 0);
-        }
-        
-        // Apply collection-based filtering or location search
-        if (filters.search && !shouldFilterByCollection) {
-          // Search didn't match any collections, so search location names instead
-          baseQuery = baseQuery.ilike('location_name', `%${filters.search}%`);
-        }
-        
-        if (shouldFilterByCollection) {
-
+          shouldFilterByCollection = true;
+          
           if (filteredCollectionIds.length > 0) {
             baseQuery = baseQuery.in('collection_id', filteredCollectionIds);
           } else {
@@ -169,6 +205,12 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
             return;
           }
         }
+
+        // Apply search filter - ONLY search location names
+        if (filters.search) {
+          baseQuery = baseQuery.ilike('location_name', `%${filters.search}%`);
+        }
+
 
         // Create a separate count query that applies the same filters
         let countQuery = supabase
@@ -182,25 +224,23 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
         if (filters.mediaType) {
           countQuery = countQuery.eq('media_type', filters.mediaType);
         }
-        if (filters.search && !shouldFilterByCollection) {
+        // Apply regional tag filtering to count query using proper JSONB contains
+        if (filters.regionalTag) {
+          const tagQuery = JSON.stringify([{ 
+            name: filters.regionalTag, 
+            type: "regional" 
+          }]);
+          countQuery = countQuery.filter('tags_unified', 'cs', tagQuery);
+        }
+        if (filters.search) {
           countQuery = countQuery.ilike('location_name', `%${filters.search}%`);
         }
         if (shouldFilterByCollection && filteredCollectionIds.length > 0) {
           countQuery = countQuery.in('collection_id', filteredCollectionIds);
         }
 
-        const { count, error: countError } = await countQuery;
-
-        if (countError) {
-          console.error('Count error:', countError);
-          throw countError;
-        }
-
-        setTotalStories(count || 0);
-
-        // Get paginated results
+        // Get paginated results - simplified approach without complex joins
         const { data: storiesData, error } = await baseQuery
-          .order('collection_id', { ascending: true })
           .order('story_index', { ascending: true })
           .range((currentPage - 1) * STORIES_PER_PAGE, currentPage * STORIES_PER_PAGE - 1);
 
@@ -209,15 +249,53 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
           throw error;
         }
 
-        // Add collection info to stories
+        // Get count with better error handling
+        const { count, error: countError } = await countQuery;
+
+        if (countError) {
+          console.error('Count error details:', {
+            error: countError,
+            message: countError?.message,
+            details: countError?.details,
+            hint: countError?.hint,
+            code: countError?.code,
+            filters: filters,
+            query: 'count query failed'
+          });
+          
+          // Fallback: Don't set an inaccurate count, let it show the current page data
+          console.log('Count query failed, showing page results without total count');
+          setTotalStories(storiesData?.length || 0);
+        } else {
+          setTotalStories(count || 0);
+        }
+
+        // Add collection info to stories and sort chronologically
         const formattedStories = storiesData?.map(story => ({
           ...story,
           collection: collectionMap.get(story.collection_id)
-        })) || [];
+        }))
+        .sort((a, b) => {
+          // Sort by collection_index first, then by story_index
+          const aDate = new Date(a.collection?.estimated_date || "1970-01-01").getTime();
+          const bDate = new Date(b.collection?.estimated_date || "1970-01-01").getTime();
+          
+          if (aDate !== bDate) {
+            return aDate - bDate;
+          }
+          return a.story_index - b.story_index;
+        }) || [];
 
         setStories(formattedStories);
-      } catch (error) {
-        console.error('Error fetching stories:', error);
+      } catch (error: any) {
+        console.error('Error fetching stories:', {
+          error,
+          message: error?.message,
+          details: error?.details,
+          hint: error?.hint,
+          code: error?.code,
+          filters: filters
+        });
         // Set empty state on error
         setStories([]);
         setTotalStories(0);
@@ -237,7 +315,7 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
   const clearFilters = () => {
     setFilters({
       collection: initialCollectionId, // Keep the initial collection from URL
-      region: '',
+      regionalTag: '', // Clear regional tag filter
       phase: '',
       mediaType: '',
       search: ''
@@ -246,7 +324,6 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
   };
 
   const totalPages = Math.ceil(totalStories / STORIES_PER_PAGE);
-  const uniqueRegions = [...new Set(collections.map(c => c.region).filter(Boolean))];
   const uniquePhases = [...new Set(collections.map(c => c.expedition_phase).filter(Boolean))];
 
   return (
@@ -256,16 +333,16 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Filter Stories</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-4">
-          {/* Search */}
+          {/* Location */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Search
+              Location
             </label>
             <input
               type="text"
               value={filters.search}
               onChange={(e) => updateFilter('search', e.target.value)}
-              placeholder="Collection or location..."
+              placeholder="Location name..."
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 placeholder-gray-500"
             />
           </div>
@@ -289,19 +366,19 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
             </select>
           </div>
 
-          {/* Region */}
+          {/* Regional Tags */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Region
+              📍 Regional Tags
             </label>
             <select
-              value={filters.region}
-              onChange={(e) => updateFilter('region', e.target.value)}
+              value={filters.regionalTag}
+              onChange={(e) => updateFilter('regionalTag', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
             >
               <option value="">All Regions</option>
-              {uniqueRegions.map(region => (
-                <option key={region} value={region}>{region}</option>
+              {availableRegionalTags.map(tag => (
+                <option key={tag} value={tag}>{tag}</option>
               ))}
             </select>
           </div>
@@ -354,6 +431,11 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
         <div className="text-sm text-gray-600">
           Showing {stories.length} of {totalStories.toLocaleString()} stories
           {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
+          {filters.regionalTag && (
+            <span className="ml-2 text-blue-600 font-medium">
+              • Filtered by: 📍 {filters.regionalTag}
+            </span>
+          )}
         </div>
       </div>
 
@@ -455,11 +537,37 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
                     #{story.story_index}
                     {story.location_name && ` • ${story.location_name}`}
                   </div>
-                  {story.collection?.region && (
-                    <div className="text-xs text-indigo-600 truncate mt-1">
-                      {story.collection.region}
+                  
+                  {/* Display regional tags from unified tag system */}
+                  {/* TEMPORARILY HIDDEN - TODO: Re-enable when tag system is finalized */}
+                  {/* {story.tags_unified && getRegionalTags(story.tags_unified).length > 0 ? (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {getRegionalTags(story.tags_unified).slice(0, 3).map((tag, index) => (
+                        <span
+                          key={`${tag.name}-${index}`}
+                          className={`text-xs px-1.5 py-0.5 rounded-full ${
+                            tag.source === 'gps' 
+                              ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                              : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                          }`}
+                          title={`${tag.source === 'gps' ? 'GPS-suggested' : 'Manual'}: ${tag.name}`}
+                        >
+                          {tag.source === 'gps' ? '📍' : '✏️'} {tag.name}
+                        </span>
+                      ))}
+                      {getRegionalTags(story.tags_unified).length > 3 && (
+                        <span className="text-xs text-gray-400 py-0.5">
+                          +{getRegionalTags(story.tags_unified).length - 3} more
+                        </span>
+                      )}
                     </div>
-                  )}
+                  ) : story.collection?.region ? ( */}
+                  {story.collection?.region ? (
+                    // Fallback to collection region if no unified tags
+                    <div className="text-xs text-gray-400 truncate mt-1">
+                      📍 {story.collection.region}
+                    </div>
+                  ) : null}
                 </div>
               </div>
             ))}

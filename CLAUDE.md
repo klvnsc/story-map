@@ -30,6 +30,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Route**: Hong Kong → China → Central Asia → Middle East → Africa → Europe → Scotland
 - **Timespan**: June 2024 - July 2025
 
+### Collections Manifest (Master Metadata)
+- **Location**: `/data/collections-manifest.json` (authoritative collection metadata)
+- **Version**: 1.1.0 (created 2025-08-15)
+- **Content**: Complete expedition structure with 7 phases, collection metadata, and number mapping
+- **Expedition Phases**: pre_expedition (1-8), north_china (9-11), central_asia (12-21), middle_east_caucasus (22-30), europe_part1 (31-41), africa (42-50), europe_uk_scotland (51-61)
+- **Collection Mapping**: old_to_new and new_to_old number mapping system for chronological ordering
+
 ### Key Constraints
 - Stories missing individual timestamps and location data
 - Same-date strategy: stories within same collection likely occurred on same day
@@ -55,11 +62,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `user_assigned_date`: Manual user input (highest accuracy)
 - `collection_default_date`: Collection-based fallback estimate
 
-**Database Schema** (Supabase):  
-- `estimated_date_gps`: Contains manual user input → mapped to `user_assigned_date`
-- `estimated_date`: Contains collection estimates → mapped to `collection_default_date`
+### Date Priority Logic for Stories
+**Simplified 3-tier system** for story dates with clear confidence levels:
 
-**Date Precedence Logic**: Use `getBestAvailableDate()` utility function for proper field precedence handling across the transition period.
+1. **`user_assigned_date`** - Manual user input (highest confidence)
+2. **`gps_estimated_date`** - GPS correlation (medium confidence, future implementation)
+3. **`collection.collection_start_date`** - Collection fallback (lowest confidence)
+
+**Implementation**: Use `getBestAvailableDate()` utility function for consistent date precedence across all components.
+
+**Tag Source Values**:
+- `'manual'` - User manual input (for stories with location data)
+- `null` - Default/auto (for all CSV imported stories)
 
 ## Architecture & Key Patterns
 
@@ -71,7 +85,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Data Flow Architecture
 1. **CSV Import Pipeline**: Raw data → Scripts → Supabase → TypeScript interfaces
 2. **Same-Date Strategy**: All stories in a collection share the collection's estimated date
-3. **Phase Mapping**: ⚠️ **IMPORTANT**: Collections are in DESCENDING chronological order (1=latest, 61=earliest)
+3. **Phase Mapping**: ⚠️ **IMPORTANT**: Collections are in ASCENDING chronological order (1=earliest, 61=latest) based on collections-manifest.json
+4. **Unified Tag System**: Three data sources integrated via single tag array with metadata
+
+### Unified Tag System Architecture
+**Tag Structure**: Single JSONB array with metadata instead of dual-array system
+```typescript
+tags: [
+  { name: "Wales", type: "regional", source: "gps", created_at: "2025-08-15T10:30:00Z" },
+  { name: "hiking", type: "activity", source: "manual", created_at: "2025-08-15T10:31:00Z" },
+  { name: "adventure", type: "emotion", source: "journal", created_at: "2025-08-15T10:32:00Z" }
+]
+```
+
+**Data Sources Integration**:
+- **GPS Expedition Data** → Regional tags (Wales, UK, Spain, Central Asia)
+- **Story Content Analysis** → Activity tags (hiking, mechanic, food, camping)  
+- **Daily Journal Emotions** → Emotion tags (adventure, struggle, joy, reflection)
+
+**Tag Types**:
+- `regional` - Geographic context for filtering and map display
+- `activity` - Content-based tags for story discovery
+- `emotion` - Emotional context from journal integration (future)
+
+**Tag Sources**:
+- `gps` - Auto-generated from GPS expedition data
+- `manual` - User input via story detail interface
+- `journal` - Auto-generated from daily journal analysis (future)
+- `ai` - Auto-generated from AI content analysis (future)
 
 ### Authentication Pattern
 - Simple localStorage-based auth for development (admin/123)
@@ -91,6 +132,39 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Linting**: `npm run lint`
 - **Data Import**: `npm run import-data` (imports CSV data to Supabase)
 
+### CDN URL Renewal Script
+**⚠️ IMPORTANT**: Use direct script execution, NOT `npm run renew-cdn-urls` (argument passing issues)
+
+**Correct Usage**:
+```bash
+npx ts-node --project scripts/tsconfig.json scripts/renew-cdn-urls.ts [command] [options]
+```
+
+**Commands**:
+- `collection <number>` - Renew single collection
+- `collections <numbers>` - Renew multiple (comma-separated: 1,5,10)
+- `all` - Renew all collections
+- `validate <number>` - Validate only (no updates)
+
+**Key Options**:
+- `--dry-run` - Preview changes without updating database
+- `--step <1|2|3>` - Run specific step only (1=fetch, 2=parse, 3=update)
+- `--skip-fetch` - Use existing HTML files
+- `--skip-parse` - Use existing CSV files
+- `--rate-limit <ms>` - API rate limiting (default: 1000ms)
+
+**Examples**:
+```bash
+# Dry run for collection 1
+npx ts-node --project scripts/tsconfig.json scripts/renew-cdn-urls.ts collection 1 --dry-run
+
+# Real update for multiple collections
+npx ts-node --project scripts/tsconfig.json scripts/renew-cdn-urls.ts collections 1,5,10
+
+# All collections with rate limiting
+npx ts-node --project scripts/tsconfig.json scripts/renew-cdn-urls.ts all --rate-limit 2000
+```
+
 ### Database Operations
 - **Schema**: Run `database/schema.sql` in Supabase SQL editor
 - **Import Scripts**: Located in `/scripts/` directory
@@ -108,56 +182,68 @@ NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=your_mapbox_access_token
 
 ## GPS-Story Correlation Strategy
 
-### 🚨 CRITICAL EXPEDITION SCOPE CORRECTION
+### ✅ Expedition Structure from Collections Manifest
 
-**MAJOR DISCOVERY**: Collections 52-61 are **NOT part of the 13-month Land Rover expedition**. These contain pre-expedition content that occurred BEFORE the expedition started in July 2024.
-
-### ✅ Corrected Expedition Mapping
-
-**13-Month Expedition Collections (1-51 only)**:
+**7-Phase Expedition Structure** (based on collections-manifest.json):
 
 ```typescript
-// CORRECTED EXPEDITION MAPPING (Collections 1-51 only)
+// EXPEDITION PHASES from collections-manifest.json
 const EXPEDITION_PHASES = {
-  // Phase 1: UK/Scotland Finale (Collections 1-15)
-  'uk_scotland': { 
-    collection_range: [1, 15], 
-    tracks: [25, 26, 27, 28, 29],
-    date_range: "May-July 2025",
-    regions: ["Wales", "England", "Scotland", "UK"]
+  // Phase 1: Pre-Expedition Adventures (Collections 1-8) 
+  'pre_expedition': {
+    collection_range: [1, 8],
+    date_range: "2022-2023",
+    description: "India/Ladakh, Indonesia, Japan cycling - before main expedition",
+    gps_correlation: "NONE - occurred before expedition start"
   },
   
-  // Phase 2: Europe/Mediterranean (Collections 16-35)  
-  'europe_mediterranean': { 
-    collection_range: [16, 35], 
-    tracks: [20, 21, 22, 23, 24],
-    date_range: "March-May 2025",
-    regions: ["Germany", "Morocco", "Spain", "France", "Italy", "Greece", "Bulgaria"]
+  // Phase 2: North China & Mongolia (Collections 9-11)
+  'north_china': {
+    collection_range: [9, 11], 
+    date_range: "June-July 2024",
+    description: "Mongolia Winter, Mongolia, Q&A - expedition preparation",
+    regions: ["Mongolia", "General"]
   },
   
-  // Phase 3: Middle East/Caucasus (Collections 36-45)
-  'middle_east_caucasus': { 
-    collection_range: [36, 45], 
-    tracks: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-    date_range: "October 2024 - March 2025",
-    regions: ["Georgia", "Armenia", "Turkey", "Middle East", "Caucasus"]
+  // Phase 3: Central Asia (Collections 12-21)
+  'central_asia': {
+    collection_range: [12, 21],
+    date_range: "July-September 2024", 
+    description: "Kyrgyzstan → Kazakhstan → Uzbekistan → Russia → Tajikistan",
+    regions: ["Kyrgyzstan", "Kazakhstan", "Uzbekistan", "Russia", "Tajikistan"]
   },
   
-  // Phase 4: Central Asia (Collections 46-51)
-  'central_asia': { 
-    collection_range: [46, 51], 
-    tracks: [3, 4, 5, 6, 7, 8, 9], // Track 3 has NO collection correlation
-    date_range: "July-October 2024",
-    regions: ["Tajikistan", "Russia", "Kazakhstan", "Uzbekistan", "Kyrgyzstan"]
+  // Phase 4: Middle East & Caucasus (Collections 22-30)
+  'middle_east_caucasus': {
+    collection_range: [22, 30],
+    date_range: "October-November 2024",
+    description: "Georgia → Armenia → Turkey", 
+    regions: ["Georgia", "Armenia", "Turkey", "Caucasus"]
+  },
+  
+  // Phase 5: Europe Part 1 (Collections 31-41)
+  'europe_part1': {
+    collection_range: [31, 41],
+    date_range: "December 2024 - February 2025",
+    description: "Bulgaria → Greece → Italy → MFW → France → Spain",
+    regions: ["Bulgaria", "Greece", "Italy", "France", "Spain"]
+  },
+  
+  // Phase 6: Africa (Collections 42-50)
+  'africa': {
+    collection_range: [42, 50],
+    date_range: "February-April 2025", 
+    description: "Morocco expedition with Italy crossings",
+    regions: ["Morocco", "Africa"]
+  },
+  
+  // Phase 7: Europe Part 2 & UK/Scotland (Collections 51-61)
+  'europe_uk_scotland': {
+    collection_range: [51, 61],
+    date_range: "April-July 2025",
+    description: "Germany → England → Wales → Scotland - expedition finale",
+    regions: ["Germany", "England", "Wales", "Scotland", "UK"]
   }
-};
-
-// EXCLUDED: Pre-expedition content (Collections 52-61)
-const EXCLUDED_COLLECTIONS = {
-  collection_range: [52, 61], // 10 collections, ~687 stories
-  reason: "pre_expedition_content", 
-  content: ["Q&A", "Mongolia", "Japan cycling", "Indonesia", "India/Ladakh"],
-  gps_correlation: "NONE - occurred before expedition start"
 };
 ```
 
@@ -165,26 +251,26 @@ const EXCLUDED_COLLECTIONS = {
 
 **Geographic Progression** (13-month Land Rover Defender journey):
 ```
-North China → Central Asia → Middle East → Africa → Mediterranean → Europe → UK → Scotland
+Mongolia → Central Asia → Middle East → Europe → Africa → Europe → UK → Scotland
 ```
 
-**Collection Coverage** (DESCENDING chronological order):
-- Collections 1-15: **Scotland → UK** (finale, June-July 2025)
-- Collections 16-35: **Europe → Mediterranean** (March-May 2025)  
-- Collections 36-45: **Africa → Middle East** (Oct 2024-March 2025)
-- Collections 46-51: **Central Asia** (July-Oct 2024, starting with Kyrgyzstan)
-- **Missing**: **North China** phase (Track 3 exists but no story collections)
+**Collection Coverage** (CHRONOLOGICAL order from manifest):
+- Collections 1-8: **Pre-Expedition** (2022-2023) - India/Ladakh, Indonesia, Japan cycling
+- Collections 9-11: **North China/Mongolia** (June-July 2024) - Expedition preparation
+- Collections 12-21: **Central Asia** (July-September 2024) - Main expedition start
+- Collections 22-30: **Middle East/Caucasus** (October-November 2024)
+- Collections 31-41: **Europe Part 1** (December 2024-February 2025)
+- Collections 42-50: **Africa** (February-April 2025) - Morocco expedition
+- Collections 51-61: **Europe/UK/Scotland** (April-July 2025) - Expedition finale
 
-### 🔍 Critical Data Gaps Identified
+### 📊 Updated Expedition Statistics
 
-1. **Track 3 Gap**: GPS Track 3 (North China, July 1-18, 2024) has NO corresponding story collections
-   - This is the "TRUE EXPEDITION START" but no stories were captured in North China
-   - Collection 51 (Kyrgyzstan) is the earliest expedition collection, not North China
-
-2. **Expedition Statistics**:
-   - **Expedition Collections**: 51 collections (Collections 1-51) → ~3,750 stories  
-   - **Excluded Collections**: 10 collections (Collections 52-61) → ~687 stories
-   - **GPS Track Coverage**: Tracks 3-29 (27 tracks) for expedition period only
+Based on collections-manifest.json data:
+- **Total Collections**: 61 collections → 4,438 stories
+- **Pre-Expedition**: 8 collections (1-8) → ~453 stories
+- **Expedition Preparation**: 3 collections (9-11) → ~274 stories  
+- **Main Expedition**: 50 collections (12-61) → ~3,711 stories
+- **Expedition Phases**: 7 distinct phases with clear geographic progression
 
 ### Key Technical Constraints
 - **No Story Timestamps**: Instagram stories lack individual timestamps
@@ -227,10 +313,16 @@ North China → Central Asia → Middle East → Africa → Mediterranean → Eu
 
 ### GPS Data Handling
 - **Limited to high-level metadata** from `data-cy-gps/garmin.md` only
-- **Expedition scope filtering**: Only Collections 1-51 have GPS correlation
+- **Expedition scope filtering**: Collections 9-61 have GPS correlation (main expedition period, Collections 1-8 excluded as pre-expedition)
 - **Regional context only**: No individual GPS coordinates available
 - **Track-level granularity**: Date ranges and regional descriptions only
 - Privacy-focused: no personal route display, only regional context
+
+### Tag System Implementation
+- **Current**: Dual-array system (`regional_tags` + `tags`) with complex synchronization
+- **Future**: Unified tag system with metadata (see `/specs/unified-tag-system-requirements.md`)
+- **Migration Strategy**: Phased approach maintaining backward compatibility
+- **Tag Input**: Manual regional tag editing capability needed for improved story organization
 
 ## Current Implementation Status
 
@@ -244,9 +336,10 @@ North China → Central Asia → Middle East → Africa → Mediterranean → Eu
 
 ### 🚧 In Development / Planned
 - Interactive Mapbox map with story locations
-- Manual location tagging interface with GPS waypoint suggestions
-- Advanced story search and filtering
-- Story detail views with metadata editing
+- **Unified tag system implementation** (Phase 1: Regional tags, Phase 2: Activity tags, Phase 3: Emotion tags)
+- Manual tag input interface for all tag types (regional, activity, emotion)
+- Advanced story search and filtering by tag type and source
+- Story detail views with comprehensive tag editing capabilities
 
 ### Key File Locations
 ```
@@ -254,15 +347,20 @@ North China → Central Asia → Middle East → Africa → Mediterranean → Eu
 ├── src/components/             # React components (StoryBrowser, etc.)
 ├── src/lib/supabase.ts        # Supabase client + type definitions
 ├── src/types/index.ts         # Main TypeScript interfaces
+├── data/
+│   └── collections-manifest.json          # Master collection metadata & expedition structure (v1.1.0)
 ├── specs/                     # Requirements, wireframes, and technical specifications
 │   ├── gps-story-correlation.md           # GPS correlation system specification
 │   ├── story-location-editing-requirements.md  # Location editing requirements (127 REQs)
 │   ├── story-edit-location-wireframe.md         # Location editing UI wireframe
 │   ├── gps-location-api-specifications.md      # API endpoints specification
-│   └── collection-gps-correlation-correction.md # Expedition scope corrections
+│   ├── collection-gps-correlation-correction.md # Expedition scope corrections
+│   └── unified-tag-system-requirements.md      # Unified tag system specification (NEW)
 ├── scripts/                   # Data import utilities
+│   ├── import-csv-data.ts                  # Main CSV import using manifest metadata
+│   └── utils/manifest-collection-mapping.ts # Collection mapping utilities
 ├── database/                  # Database schema and updates
 │   ├── schema.sql                          # Original PostgreSQL schema
 │   └── schema-updates-gps-location.sql     # GPS location feature schema updates
-└── data-story-collection/     # 61 CSV files (Collections 1-51: expedition, 52-61: excluded)
+└── data-story-collection/     # 61 CSV files with raw story data
 ```

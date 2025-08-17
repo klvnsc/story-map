@@ -13,6 +13,9 @@ import {
   formatDisplayDate,
   type GPSCorrelationData 
 } from '@/lib/gps-correlation';
+import { TagWithMetadata } from '@/types';
+import { getRegionalTags, unifiedTagsToLegacy, legacyTagsToUnified, createTag } from '@/lib/tags';
+import RegionalTagInput from '@/components/RegionalTagInput';
 
 interface Story {
   id: string;
@@ -25,17 +28,16 @@ interface Story {
   longitude?: number;
   location_confidence?: 'high' | 'medium' | 'low' | 'estimated';
   content_type?: string[];
+  // UNIFIED TAG SYSTEM
+  tags_unified?: TagWithMetadata[];
+  // LEGACY TAG FIELDS (for backward compatibility)
   tags?: string[];
-  estimated_date?: string;
+  regional_tags?: string[];
+  tag_source?: 'manual' | null;
   time_added?: string;
   collection_id: string;
   // GPS correlation fields
-  estimated_date_gps?: string;
-  estimated_date_range_start?: string;
-  estimated_date_range_end?: string;
-  regional_tags?: string[];
-  tag_source?: 'gps_estimated' | 'manual' | 'mixed' | 'excluded';
-  date_confidence?: 'gps_estimated' | 'collection_estimated' | 'manual' | 'high' | 'medium' | 'low';
+  user_assigned_date?: string;
   collection?: {
     id: string;
     name: string;
@@ -44,6 +46,7 @@ interface Story {
     region?: string;
     expedition_phase?: string;
     is_expedition_scope?: boolean;
+    collection_start_date?: string;
   };
 }
 
@@ -65,8 +68,11 @@ export default function StoryDetail() {
     latitude: '',
     longitude: '',
     location_confidence: '',
+    // UNIFIED TAG SYSTEM
+    tags_unified: [] as TagWithMetadata[],
+    // LEGACY FIELDS (for backward compatibility)
     tags: [] as string[],
-    estimated_date_gps: '',
+    user_assigned_date: '',
     regional_tags: [] as string[]
   });
   
@@ -115,16 +121,13 @@ export default function StoryDetail() {
             longitude,
             location_confidence,
             content_type,
+            tags_unified,
             tags,
-            estimated_date,
             time_added,
             collection_id,
-            estimated_date_gps,
-            estimated_date_range_start,
-            estimated_date_range_end,
+            user_assigned_date,
             regional_tags,
             tag_source,
-            date_confidence,
             story_collections!inner(
               id,
               name,
@@ -132,7 +135,8 @@ export default function StoryDetail() {
               collection_index,
               region,
               expedition_phase,
-              is_expedition_scope
+              is_expedition_scope,
+              collection_start_date
             )
           `)
           .eq('id', storyId)
@@ -186,13 +190,20 @@ export default function StoryDetail() {
   // Initialize edit form when story loads
   useEffect(() => {
     if (story) {
+      // Get unified tags or convert legacy tags if needed
+      const unifiedTags = story.tags_unified || 
+        (story.tags ? legacyTagsToUnified(story.tags, 'regional', 'manual') : []);
+      
       setEditForm({
         location_name: story.location_name || '',
         latitude: story.latitude?.toString() || '',
         longitude: story.longitude?.toString() || '',
         location_confidence: story.location_confidence || '',
+        // UNIFIED TAG SYSTEM
+        tags_unified: unifiedTags,
+        // LEGACY FIELDS (for backward compatibility)
         tags: story.tags || [],
-        estimated_date_gps: story.estimated_date_gps || '',
+        user_assigned_date: story.user_assigned_date || '',
         regional_tags: story.regional_tags || []
       });
     }
@@ -209,7 +220,7 @@ export default function StoryDetail() {
           story_id: story.id,
           collection_name: story.collection.name,
           collection_index: story.collection.collection_index,
-          estimated_date: story.estimated_date_gps || story.estimated_date,
+          estimated_date: story.user_assigned_date || story.collection?.collection_start_date,
           current_location: {
             location_name: story.location_name,
             latitude: story.latitude,
@@ -261,45 +272,58 @@ export default function StoryDetail() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [story, collectionStories, router]);
 
-  // Save story updates using new API endpoint
+  // Save story updates using unified tag system
   const handleSave = async () => {
     if (!story) return;
     
     setIsSaving(true);
     try {
-      // Prepare update payload for new API
-      const updatePayload = {
+      // Save location data using existing API
+      const locationUpdatePayload = {
         location_name: editForm.location_name || undefined,
         latitude: editForm.latitude ? parseFloat(editForm.latitude) : undefined,
         longitude: editForm.longitude ? parseFloat(editForm.longitude) : undefined,
         location_confidence: editForm.location_confidence || undefined,
-        estimated_date_gps: editForm.estimated_date_gps || undefined,
-        regional_tags: editForm.regional_tags.length > 0 ? editForm.regional_tags : undefined,
-        manual_tags: editForm.tags.filter(tag => !editForm.regional_tags.includes(tag)),
-        tag_source: manualTagSourceOverride || determineTagSource(),
-        date_confidence: editForm.estimated_date_gps ? 'manual' : story.date_confidence
+        user_assigned_date: editForm.user_assigned_date || undefined
       };
 
-      const response = await fetch(`/api/story/${story.id}/location`, {
+      const locationResponse = await fetch(`/api/story/${story.id}/location`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatePayload)
+        body: JSON.stringify(locationUpdatePayload)
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update story');
+      if (!locationResponse.ok) {
+        const errorData = await locationResponse.json();
+        throw new Error(errorData.error || 'Failed to update story location');
       }
 
-      const result = await response.json();
+      // Save unified tags using new API
+      const tagsResponse = await fetch(`/api/story/${story.id}/tags`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tags_unified: editForm.tags_unified })
+      });
+
+      if (!tagsResponse.ok) {
+        const errorData = await tagsResponse.json();
+        throw new Error(errorData.error || 'Failed to update story tags');
+      }
+
+      const locationResult = await locationResponse.json();
+      const tagsResult = await tagsResponse.json();
       
-      if (result.success && result.data) {
+      if (locationResult.success && tagsResult.success) {
         // Update local story state with returned data
-        setStory(prevStory => prevStory ? { ...prevStory, ...result.data } : null);
+        setStory(prevStory => prevStory ? { 
+          ...prevStory, 
+          ...locationResult.data,
+          tags_unified: editForm.tags_unified
+        } : null);
         
         // Cache manual date if provided
-        if (editForm.estimated_date_gps) {
-          cacheLastManualDate(editForm.estimated_date_gps);
+        if (editForm.user_assigned_date) {
+          cacheLastManualDate(editForm.user_assigned_date);
         }
         
         setIsEditing(false);
@@ -319,8 +343,8 @@ export default function StoryDetail() {
     if (!story?.collection?.is_expedition_scope) return 'excluded';
     
     // If user manually changed the date, it's always manual
-    const manuallyChangedDate = editForm.estimated_date_gps && 
-      editForm.estimated_date_gps !== story.estimated_date_gps;
+    const manuallyChangedDate = editForm.user_assigned_date && 
+      editForm.user_assigned_date !== story.user_assigned_date;
     
     // If user manually removed or modified tags, it's manual
     const originalTags = [...(story.tags || [])].sort();
@@ -336,8 +360,8 @@ export default function StoryDetail() {
       wasAlreadyManual,
       originalTags,
       currentTags,
-      originalDate: story.estimated_date_gps,
-      currentDate: editForm.estimated_date_gps
+      originalDate: story.user_assigned_date,
+      currentDate: editForm.user_assigned_date
     });
     
     if (manuallyChangedDate || tagsWereModified || wasAlreadyManual) {
@@ -355,13 +379,20 @@ export default function StoryDetail() {
   // Cancel editing
   const handleCancel = () => {
     if (story) {
+      // Get unified tags or convert legacy tags if needed
+      const unifiedTags = story.tags_unified || 
+        (story.tags ? legacyTagsToUnified(story.tags, 'regional', 'manual') : []);
+      
       setEditForm({
         location_name: story.location_name || '',
         latitude: story.latitude?.toString() || '',
         longitude: story.longitude?.toString() || '',
         location_confidence: story.location_confidence || '',
+        // UNIFIED TAG SYSTEM
+        tags_unified: unifiedTags,
+        // LEGACY FIELDS (for backward compatibility)
         tags: story.tags || [],
-        estimated_date_gps: story.estimated_date_gps || '',
+        user_assigned_date: story.user_assigned_date || '',
         regional_tags: story.regional_tags || []
       });
     }
@@ -377,25 +408,53 @@ export default function StoryDetail() {
     if (type === 'date' && gpsSuggestions) {
       setEditForm(prev => ({
         ...prev,
-        estimated_date_gps: gpsSuggestions.date_range.start
+        user_assigned_date: gpsSuggestions.date_range.start
       }));
     }
     
     if (type === 'tags' || type === 'both') {
-      setEditForm(prev => ({
-        ...prev,
-        regional_tags: [...new Set([...prev.regional_tags, ...suggestedTags])],
-        tags: [...new Set([...prev.tags, ...suggestedTags])]
-      }));
+      setEditForm(prev => {
+        // Create new GPS regional tags from suggestions
+        const newGpsTags = suggestedTags.map(tagName => 
+          createTag(tagName, 'regional', 'gps', 0.9)
+        );
+        
+        // Merge with existing tags, avoiding duplicates
+        const existingTagNames = prev.tags_unified.map(tag => tag.name);
+        const uniqueNewTags = newGpsTags.filter(tag => !existingTagNames.includes(tag.name));
+        const updatedUnifiedTags = [...prev.tags_unified, ...uniqueNewTags];
+        
+        return {
+          ...prev,
+          tags_unified: updatedUnifiedTags,
+          // Update legacy fields for backward compatibility
+          regional_tags: [...new Set([...prev.regional_tags, ...suggestedTags])],
+          tags: [...new Set([...prev.tags, ...suggestedTags])]
+        };
+      });
     }
     
     if (type === 'both' && gpsSuggestions) {
-      setEditForm(prev => ({
-        ...prev,
-        estimated_date_gps: gpsSuggestions.date_range.start,
-        regional_tags: [...new Set([...prev.regional_tags, ...suggestedTags])],
-        tags: [...new Set([...prev.tags, ...suggestedTags])]
-      }));
+      setEditForm(prev => {
+        // Create new GPS regional tags from suggestions
+        const newGpsTags = suggestedTags.map(tagName => 
+          createTag(tagName, 'regional', 'gps', 0.9)
+        );
+        
+        // Merge with existing tags, avoiding duplicates
+        const existingTagNames = prev.tags_unified.map(tag => tag.name);
+        const uniqueNewTags = newGpsTags.filter(tag => !existingTagNames.includes(tag.name));
+        const updatedUnifiedTags = [...prev.tags_unified, ...uniqueNewTags];
+        
+        return {
+          ...prev,
+          user_assigned_date: gpsSuggestions.date_range.start,
+          tags_unified: updatedUnifiedTags,
+          // Update legacy fields for backward compatibility
+          regional_tags: [...new Set([...prev.regional_tags, ...suggestedTags])],
+          tags: [...new Set([...prev.tags, ...suggestedTags])]
+        };
+      });
     }
   };
   
@@ -403,7 +462,7 @@ export default function StoryDetail() {
   const useLastManualDate = () => {
     const lastDate = getLastManualDate();
     if (lastDate) {
-      setEditForm(prev => ({ ...prev, estimated_date_gps: lastDate }));
+      setEditForm(prev => ({ ...prev, user_assigned_date: lastDate }));
     }
   };
 
@@ -712,27 +771,19 @@ export default function StoryDetail() {
                     </div>
                   </div>
 
-                  {(story.estimated_date || story.estimated_date_gps) && (
+                  {(story.user_assigned_date || story.collection?.collection_start_date) && (
                     <div>
                       <label className="block text-xs font-medium text-gray-700">
                         Estimated Date
                       </label>
                       <div className="text-sm text-gray-900">
-                        {story.estimated_date_gps 
-                          ? formatDisplayDate(story.estimated_date_gps)
-                          : story.estimated_date 
-                            ? new Date(story.estimated_date).toLocaleDateString()
+                        {story.user_assigned_date 
+                          ? formatDisplayDate(story.user_assigned_date)
+                          : story.collection?.collection_start_date 
+                            ? formatDisplayDate(story.collection.collection_start_date)
                             : 'Not set'
                         }
                       </div>
-                      {story.date_confidence && (
-                        <div className="text-xs text-gray-500">
-                          ({story.date_confidence === 'gps_estimated' ? 'GPS' :
-                            story.date_confidence === 'collection_estimated' ? 'Collection' :
-                            story.date_confidence === 'manual' ? 'Manual' : 
-                            story.date_confidence})
-                        </div>
-                      )}
                     </div>
                   )}
 
@@ -771,7 +822,7 @@ export default function StoryDetail() {
                 </div>
 
                 {/* GPS Smart Suggestions Panel */}
-                {isEditing && showGpsSuggestions && story?.collection?.is_expedition_scope && (
+                {isEditing && story?.collection?.is_expedition_scope && (
                   <div className="border border-indigo-200 bg-indigo-50 rounded-lg p-4 mb-6">
                     <h3 className="text-sm font-medium text-indigo-900 mb-3 flex items-center">
                       <span className="w-2 h-2 bg-indigo-500 rounded-full mr-2"></span>
@@ -785,6 +836,11 @@ export default function StoryDetail() {
                       </div>
                     ) : (
                       <div className="space-y-3">
+                        {/* Debug info */}
+                        <div className="text-xs text-gray-600 mb-2 p-2 bg-gray-100 rounded">
+                          Debug: GPS={!!gpsSuggestions}, Tags={suggestedTags.length}, Show={showGpsSuggestions}
+                        </div>
+                        
                         {gpsSuggestions && (
                           <div className="bg-white rounded border p-3">
                             <div className="text-xs font-medium text-gray-700 mb-1">GPS Track Found</div>
@@ -834,6 +890,16 @@ export default function StoryDetail() {
                             </button>
                           </div>
                         )}
+                        
+                        {!gpsSuggestions && suggestedTags.length === 0 && (
+                          <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+                            <div className="text-xs font-medium text-yellow-800 mb-1">No GPS Data Found</div>
+                            <div className="text-xs text-yellow-700">
+                              No GPS correlation available for this collection/date combination.
+                              Collection: {story?.collection?.collection_index}, Date: {story?.collection?.collection_start_date || 'None'}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -854,10 +920,10 @@ export default function StoryDetail() {
                         <div className="flex space-x-2">
                           <input
                             type="date"
-                            value={editForm.estimated_date_gps?.split('T')[0] || ''}
+                            value={editForm.user_assigned_date?.split('T')[0] || ''}
                             onChange={async (e) => {
                               const dateValue = e.target.value ? e.target.value + 'T12:00:00.000Z' : '';
-                              setEditForm(prev => ({ ...prev, estimated_date_gps: dateValue }));
+                              setEditForm(prev => ({ ...prev, user_assigned_date: dateValue }));
                               
                               // Auto-update regional tags when date changes
                               if (dateValue && story?.collection) {
@@ -866,7 +932,7 @@ export default function StoryDetail() {
                                     story_id: story.id,
                                     collection_name: story.collection.name,
                                     collection_index: story.collection.collection_index,
-                                    estimated_date: dateValue
+                                    user_assigned_date: dateValue
                                   });
                                   
                                   // For manually set dates, override collection-based correlation
@@ -883,15 +949,30 @@ export default function StoryDetail() {
                                     console.warn('Date-only GPS correlation failed:', error);
                                   }
                                   
-                                  // Update regional tags based on new date
-                                  setEditForm(prev => ({
-                                    ...prev,
-                                    regional_tags: gpsContext.suggested_regional_tags,
-                                    tags: [
-                                      ...prev.tags.filter(tag => !prev.regional_tags.includes(tag)), // Remove old regional tags
-                                      ...gpsContext.suggested_regional_tags // Add new regional tags
-                                    ]
-                                  }));
+                                  // Update regional tags based on new date - Unified Tag System
+                                  setEditForm(prev => {
+                                    // Create new GPS regional tags from suggestions
+                                    const newGpsTags = gpsContext.suggested_regional_tags.map(tagName => 
+                                      createTag(tagName, 'regional', 'gps', 0.9)
+                                    );
+                                    
+                                    // Remove old GPS regional tags and add new ones
+                                    const nonGpsRegionalTags = prev.tags_unified.filter(tag => 
+                                      !(tag.type === 'regional' && tag.source === 'gps')
+                                    );
+                                    const updatedUnifiedTags = [...nonGpsRegionalTags, ...newGpsTags];
+                                    
+                                    return {
+                                      ...prev,
+                                      tags_unified: updatedUnifiedTags,
+                                      // Update legacy fields for backward compatibility
+                                      regional_tags: gpsContext.suggested_regional_tags,
+                                      tags: [
+                                        ...prev.tags.filter(tag => !prev.regional_tags.includes(tag)), // Remove old regional tags
+                                        ...gpsContext.suggested_regional_tags // Add new regional tags
+                                      ]
+                                    };
+                                  });
                                   
                                 } catch (error) {
                                   console.warn('Failed to auto-update regional tags:', error);
@@ -910,28 +991,38 @@ export default function StoryDetail() {
                           <button
                             onClick={async () => {
                               // Refresh GPS suggestions based on current date
-                              if (editForm.estimated_date_gps) {
+                              if (editForm.user_assigned_date && story?.collection) {
+                                setGpsLoading(true);
                                 try {
-                                  const dateOnlyResponse = await fetch(`/api/gps-track-for-date?date=${editForm.estimated_date_gps.split('T')[0]}`);
-                                  if (dateOnlyResponse.ok) {
-                                    const result = await dateOnlyResponse.json();
-                                    if (result.success && result.data) {
-                                      const newRegionalTags = result.data.regional_tags || [];
-                                      setEditForm(prev => ({
-                                        ...prev,
-                                        regional_tags: newRegionalTags,
-                                        tags: [
-                                          ...prev.tags.filter(tag => !prev.regional_tags.includes(tag)),
-                                          ...newRegionalTags
-                                        ]
-                                      }));
-                                      alert(`Updated regional tags for ${editForm.estimated_date_gps.split('T')[0]}: ${newRegionalTags.join(', ')}`);
-                                    } else {
-                                      alert('No GPS correlation found for this date');
-                                    }
-                                  }
-                                } catch {
-                                  alert('Failed to refresh GPS suggestions');
+                                  // Refresh GPS context to update suggestions panel
+                                  const gpsContext = await getStoryGPSContext({
+                                    story_id: story.id,
+                                    collection_name: story.collection.name,
+                                    collection_index: story.collection.collection_index,
+                                    estimated_date: editForm.user_assigned_date,
+                                    current_location: {
+                                      location_name: story.location_name,
+                                      latitude: story.latitude,
+                                      longitude: story.longitude,
+                                      location_confidence: story.location_confidence
+                                    },
+                                    current_tags: story.tags,
+                                    tag_source: story.tag_source
+                                  });
+                                  
+                                  // Update suggestions in the GPS Smart Suggestions panel
+                                  setGpsSuggestions(gpsContext.gps_suggestions || null);
+                                  setSuggestedTags(gpsContext.suggested_regional_tags);
+                                  
+                                  console.log('GPS suggestions refreshed:', {
+                                    gps_suggestions: gpsContext.gps_suggestions,
+                                    suggested_regional_tags: gpsContext.suggested_regional_tags
+                                  });
+                                  
+                                } catch (error) {
+                                  console.error('Failed to refresh GPS suggestions:', error);
+                                } finally {
+                                  setGpsLoading(false);
                                 }
                               } else {
                                 alert('Please set a date first');
@@ -944,12 +1035,19 @@ export default function StoryDetail() {
                           </button>
                           <button
                             onClick={() => {
-                              // Clear all regional tags for pre-expedition dates
-                              setEditForm(prev => ({
-                                ...prev,
-                                regional_tags: [],
-                                tags: prev.tags.filter(tag => !prev.regional_tags.includes(tag))
-                              }));
+                              // Clear all regional tags for pre-expedition dates - Unified Tag System
+                              setEditForm(prev => {
+                                // Remove all regional tags from unified tags
+                                const nonRegionalTags = prev.tags_unified.filter(tag => tag.type !== 'regional');
+                                
+                                return {
+                                  ...prev,
+                                  tags_unified: nonRegionalTags,
+                                  // Update legacy fields for backward compatibility
+                                  regional_tags: [],
+                                  tags: prev.tags.filter(tag => !prev.regional_tags.includes(tag))
+                                };
+                              });
                             }}
                             className="text-xs bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded"
                             title="Clear regional tags (for pre-expedition dates)"
@@ -958,9 +1056,9 @@ export default function StoryDetail() {
                           </button>
                         </div>
                         
-                        {story.estimated_date && (
+                        {story.collection?.collection_start_date && (
                           <div className="text-xs text-gray-500 mt-1">
-                            Collection estimate: {formatDisplayDate(story.estimated_date)}
+                            Collection estimate: {formatDisplayDate(story.collection.collection_start_date)}
                           </div>
                         )}
                       </div>
@@ -970,10 +1068,7 @@ export default function StoryDetail() {
                           Date Confidence
                         </label>
                         <div className="text-sm text-gray-600">
-                          {story.date_confidence === 'gps_estimated' ? 'GPS Estimated' :
-                           story.date_confidence === 'collection_estimated' ? 'Collection Estimated' :
-                           story.date_confidence === 'manual' ? 'Manually Set' :
-                           story.date_confidence || 'Not Set'}
+                          {story.user_assigned_date ? 'Manually Set' : 'Collection Estimated'}
                         </div>
                       </div>
                     </div>
@@ -1053,129 +1148,80 @@ export default function StoryDetail() {
                   </div>
                 </div>
 
-                {/* Tags */}
+                {/* Tags - Unified Tag System */}
                 <div className="border-t border-gray-200 pt-6">
                   <h3 className="text-sm font-medium text-gray-900 mb-3">
                     Tags
                   </h3>
                   
-                  {/* Regional Tags (separate display if editing) */}
-                  {isEditing && editForm.regional_tags.length > 0 && (
-                    <div className="mb-4">
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
-                        Regional Tags (GPS)
-                      </label>
-                      <div className="flex flex-wrap gap-1 p-2 border border-blue-200 bg-blue-50 rounded-md">
-                        {editForm.regional_tags.map((tag, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center px-2 py-1 rounded text-xs bg-blue-200 text-blue-800"
-                          >
-                            {tag}
-                            {isEditing && (
-                              <button
-                                onClick={() => {
-                                  const newRegionalTags = editForm.regional_tags.filter((_, i) => i !== index);
-                                  const newAllTags = editForm.tags.filter(t => t !== tag);
-                                  setEditForm(prev => ({ 
-                                    ...prev, 
-                                    regional_tags: newRegionalTags,
-                                    tags: newAllTags
-                                  }));
-                                }}
-                                className="ml-1 text-blue-600 hover:text-blue-800"
-                              >
-                                ×
-                              </button>
-                            )}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                      {isEditing && editForm.regional_tags.length > 0 ? 'Manual Tags' : 'All Tags'}
-                    </label>
-                    <div className="flex flex-wrap gap-1 min-h-[2rem] p-2 border border-gray-300 rounded-md">
-                      {(isEditing ? editForm.tags : story.tags || []).length > 0 ? (
-                        (isEditing ? editForm.tags : story.tags || []).map((tag, index) => {
-                          const isRegional = isEditing && editForm.regional_tags.includes(tag);
-                          return (
-                            <span
-                              key={index}
-                              className={`inline-flex items-center px-2 py-1 rounded text-xs ${
-                                isRegional 
-                                  ? 'bg-blue-200 text-blue-800' 
-                                  : 'bg-gray-100 text-gray-800'
+                  {isEditing ? (
+                    <RegionalTagInput
+                      tags={editForm.tags_unified}
+                      onChange={(newTags) => {
+                        setEditForm(prev => ({
+                          ...prev,
+                          tags_unified: newTags,
+                          // Update legacy fields for backward compatibility
+                          tags: unifiedTagsToLegacy(newTags),
+                          regional_tags: unifiedTagsToLegacy(getRegionalTags(newTags))
+                        }));
+                      }}
+                      disabled={false}
+                    />
+                  ) : (
+                    // Display mode - show unified tags or legacy tags
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap gap-2">
+                        {(story.tags_unified?.length || 0) > 0 ? (
+                          story.tags_unified!.map((tag, index) => (
+                            <div
+                              key={`${tag.name}-${index}`}
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                                tag.type === 'regional'
+                                  ? 'bg-blue-100 text-blue-800 border-blue-200'
+                                  : tag.type === 'activity'
+                                  ? 'bg-green-100 text-green-800 border-green-200'
+                                  : 'bg-orange-100 text-orange-800 border-orange-200'
                               }`}
                             >
+                              <span className="text-xs opacity-60 mr-1">
+                                {tag.source === 'gps' ? '📍' : 
+                                 tag.source === 'manual' ? '✏️' : 
+                                 tag.source === 'journal' ? '📔' : '🤖'}
+                              </span>
+                              {tag.name}
+                            </div>
+                          ))
+                        ) : story.tags?.length ? (
+                          // Fallback to legacy tags if no unified tags
+                          story.tags.map((tag, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-2 py-1 rounded text-xs bg-gray-100 text-gray-800"
+                            >
                               {tag}
-                              {isEditing && (
-                                <button
-                                  onClick={() => {
-                                    setEditForm(prev => ({
-                                      ...prev,
-                                      tags: prev.tags.filter((_, i) => i !== index),
-                                      regional_tags: prev.regional_tags.filter(t => t !== tag)
-                                    }));
-                                  }}
-                                  className="ml-1 text-gray-600 hover:text-red-600"
-                                >
-                                  ×
-                                </button>
-                              )}
                             </span>
-                          );
-                        })
-                      ) : (
-                        <span className="text-xs text-gray-500">No tags yet</span>
-                      )}
-                    </div>
-                    
-                    {/* Tag Source Information */}
-                    {story.tag_source && (
-                      <div className="text-xs text-gray-500 mt-1 flex items-center justify-between">
-                        <span>
-                          Source: {story.tag_source === 'gps_estimated' ? 'GPS Estimated' :
-                                  story.tag_source === 'manual' ? 'Manually Added' :
-                                  story.tag_source === 'mixed' ? 'GPS + Manual' :
-                                  story.tag_source === 'excluded' ? 'Excluded Collection' :
-                                  story.tag_source}
-                          {manualTagSourceOverride && (
-                            <span className="ml-1 text-orange-600 font-medium">(Override Active)</span>
-                          )}
-                        </span>
-                        {isEditing && story.tag_source === 'gps_estimated' && (
-                          <button
-                            onClick={() => {
-                              // Force tag source to manual since user is manually editing
-                              const updatePayload = {
-                                tag_source: 'manual' as const
-                              };
-                              
-                              fetch(`/api/story/${story.id}/location`, {
-                                method: 'PUT',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(updatePayload)
-                              }).then(() => {
-                                setStory(prev => prev ? { ...prev, tag_source: 'manual' } : null);
-                                setManualTagSourceOverride('manual'); // Persist the override
-                                alert('Tag source updated to Manual');
-                              }).catch(() => {
-                                alert('Failed to update tag source');
-                              });
-                            }}
-                            className="text-xs bg-orange-100 hover:bg-orange-200 text-orange-700 px-2 py-1 rounded ml-2"
-                            title="Fix incorrect GPS Estimated source"
-                          >
-                            Fix Source
-                          </button>
+                          ))
+                        ) : (
+                          <span className="text-xs text-gray-500">No tags yet</span>
                         )}
                       </div>
-                    )}
-                  </div>
+                      
+                      {/* Tag Source Information */}
+                      {story.tag_source && (
+                        <div className="text-xs text-gray-600">
+                          Legacy Source: 
+                          <span className="ml-1 font-medium">
+                            {story.tag_source === 'gps_estimated' ? 'GPS Estimated' :
+                              story.tag_source === 'manual' ? 'Manual' :
+                              story.tag_source === 'mixed' ? 'GPS + Manual' :
+                              story.tag_source === 'excluded' ? 'Excluded Collection' :
+                              story.tag_source}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Collection Status Warning */}
