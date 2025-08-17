@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { createTag, TagWithMetadata } from '@/lib/tags'
 
 // GPS Track Correlation API Endpoint
 // GET /api/gps-track-for-date?date=2025-07-02&collection_index=1
@@ -16,7 +17,7 @@ interface GPSTrackResponse {
     expedition_phase: string
     region: string
     cities: string[]
-    regional_tags: string[]
+    regional_tags: TagWithMetadata[]
     classification: 'moving' | 'rest'
     distance_km?: number
     confidence: 'high' | 'medium' | 'low'
@@ -24,38 +25,64 @@ interface GPSTrackResponse {
   error?: string
 }
 
-// Collection-to-GPS-Track mapping (CORRECTED: Collections 1-51 only)
+// Collection-to-GPS-Track mapping (based on collections-manifest.json)
+// NEW: Collections in ASCENDING chronological order (1=earliest, 61=latest)
 const EXPEDITION_COLLECTION_MAPPING = {
-  // Phase 1: UK/Scotland Finale (Collections 1-15)
-  uk_scotland: { 
-    collection_range: [1, 15], 
-    tracks: [25, 26, 27, 28, 29],
-    date_range: { start: "2025-05-25", end: "2025-07-02" },
-    regions: ["Wales", "England", "Scotland", "UK", "Britain"]
+  // Pre-expedition (Collections 1-8) - EXCLUDED from GPS correlation
+  pre_expedition: {
+    collection_range: [1, 8],
+    tracks: [], // No GPS tracking for pre-expedition content
+    date_range: { start: "2022-06-01", end: "2023-12-31" },
+    regions: ["India", "Indonesia", "Japan"],
+    excluded: true
   },
   
-  // Phase 2: Europe/Mediterranean (Collections 16-35)  
-  europe_mediterranean: { 
-    collection_range: [16, 35], 
-    tracks: [20, 21, 22, 23, 24],
-    date_range: { start: "2025-03-14", end: "2025-05-25" },
-    regions: ["Germany", "Morocco", "Spain", "France", "Italy", "Greece", "Bulgaria", "Mediterranean", "Europe"]
+  // North China & Mongolia (Collections 9-11)
+  north_china: {
+    collection_range: [9, 11],
+    tracks: [1, 2], // Limited GPS data for expedition preparation
+    date_range: { start: "2024-02-24", end: "2024-07-20" },
+    regions: ["Mongolia", "China"]
   },
   
-  // Phase 3: Middle East/Caucasus (Collections 36-45)
+  // Central Asia (Collections 12-21)
+  central_asia: { 
+    collection_range: [12, 21], 
+    tracks: [3, 4, 5, 6, 7, 8, 9],
+    date_range: { start: "2024-07-18", end: "2024-09-25" },
+    regions: ["Kyrgyzstan", "Kazakhstan", "Uzbekistan", "Russia", "Tajikistan", "Central Asia"]
+  },
+  
+  // Middle East & Caucasus (Collections 22-30)
   middle_east_caucasus: { 
-    collection_range: [36, 45], 
+    collection_range: [22, 30], 
     tracks: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-    date_range: { start: "2024-10-17", end: "2025-03-12" },
+    date_range: { start: "2024-10-06", end: "2024-11-27" },
     regions: ["Georgia", "Armenia", "Turkey", "Middle East", "Caucasus"]
   },
   
-  // Phase 4: Central Asia (Collections 46-51)
-  central_asia: { 
-    collection_range: [46, 51], 
-    tracks: [3, 4, 5, 6, 7, 8, 9], // Track 3 has NO collection correlation
-    date_range: { start: "2024-07-01", end: "2024-10-16" },
-    regions: ["Tajikistan", "Russia", "Kazakhstan", "Uzbekistan", "Kyrgyzstan", "Central Asia"]
+  // Europe Part 1 (Collections 31-41)
+  europe_part1: { 
+    collection_range: [31, 41], 
+    tracks: [20, 21, 22, 23, 24],
+    date_range: { start: "2024-12-06", end: "2025-02-07" },
+    regions: ["Bulgaria", "Greece", "Italy", "France", "Spain", "Europe"]
+  },
+  
+  // Africa (Collections 42-50)
+  africa: {
+    collection_range: [42, 50],
+    tracks: [25, 26], // Limited GPS data for Africa segment
+    date_range: { start: "2025-01-17", end: "2025-04-06" },
+    regions: ["Morocco", "Africa"]
+  },
+  
+  // Europe Part 2 & UK/Scotland (Collections 51-61)
+  europe_uk_scotland: { 
+    collection_range: [51, 61], 
+    tracks: [27, 28, 29],
+    date_range: { start: "2025-04-24", end: "2025-07-31" },
+    regions: ["Germany", "England", "Wales", "Scotland", "UK", "Britain"]
   }
 }
 
@@ -123,8 +150,8 @@ export async function GET(request: NextRequest) {
     if (collectionIndexParam) {
       const collectionIndex = parseInt(collectionIndexParam)
       
-      // Check if collection is excluded (Collections 52-61)
-      if (collectionIndex >= 52 && collectionIndex <= 61) {
+      // Check if collection is excluded (Collections 1-8: pre-expedition content)
+      if (collectionIndex >= 1 && collectionIndex <= 8) {
         return NextResponse.json({
           success: false,
           error: 'Collection is excluded from expedition scope (pre-expedition content)'
@@ -218,7 +245,9 @@ export async function GET(request: NextRequest) {
         expedition_phase: bestTrack.expedition_phase || expeditionPhase,
         region: bestTrack.region || phaseConfig.regions[0],
         cities: bestTrack.cities || [],
-        regional_tags: phaseConfig.regions,
+        regional_tags: phaseConfig.regions.map(regionName => 
+          createTag(regionName, 'regional', 'gps', confidence === 'high' ? 1.0 : confidence === 'medium' ? 0.8 : 0.6)
+        ),
         classification: bestTrack.classification as 'moving' | 'rest',
         distance_km: bestTrack.distance_km ? parseFloat(bestTrack.distance_km) : undefined,
         confidence

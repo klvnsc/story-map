@@ -56,20 +56,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **stories**: 4,438 individual stories with collection references  
 - **gps_waypoints**: 9,731 GPS points from 29 expedition tracks
 
-## ⚠️ Database Field Naming Status
+## Date Priority Logic for Stories
 
-**Current Implementation** (TypeScript Code):
-- `user_assigned_date`: Manual user input (highest accuracy)
-- `collection_default_date`: Collection-based fallback estimate
+**3-tier system** for story dates with clear confidence levels:
 
-### Date Priority Logic for Stories
-**Simplified 3-tier system** for story dates with clear confidence levels:
-
-1. **`user_assigned_date`** - Manual user input (highest confidence)
-2. **`gps_estimated_date`** - GPS correlation (medium confidence, future implementation)
-3. **`collection.collection_start_date`** - Collection fallback (lowest confidence)
-
-**Implementation**: Use `getBestAvailableDate()` utility function for consistent date precedence across all components.
+1. **`user_assigned_date`** - Manual user input (highest confidence, should be mostly NULL)
+2. **`gps_estimated_date`** - GPS correlation (medium confidence, future implementation)  
+3. **`collection.collection_start_date`** - Collection fallback (lowest confidence, primary source)
 
 **Tag Source Values**:
 - `'manual'` - User manual input (for stories with location data)
