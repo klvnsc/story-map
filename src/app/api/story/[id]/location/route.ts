@@ -12,12 +12,9 @@ interface StoryLocationUpdateRequest {
   location_confidence?: 'high' | 'medium' | 'low' | 'estimated'
   
   // GPS correlation fields
-  estimated_date_gps?: string // ISO timestamp
-  estimated_date_range_start?: string
-  estimated_date_range_end?: string
+  user_assigned_date?: string // ISO timestamp (manual user input)
   regional_tags?: string[]
-  tag_source?: 'gps_estimated' | 'manual' | 'mixed' | 'excluded'
-  date_confidence?: 'gps_estimated' | 'collection_estimated' | 'manual' | 'high' | 'medium' | 'low'
+  tag_source?: 'manual' | null
   
   // Manual tags (separate from regional)
   manual_tags?: string[]
@@ -33,9 +30,8 @@ interface StoryLocationUpdateResponse {
     location_confidence: string | null
     regional_tags: string[]
     tags: string[] // Combined regional + manual tags
-    tag_source: string
+    tag_source: string | null
     estimated_date_gps: string | null
-    date_confidence: string
     updated_at: string
   }
   error?: string
@@ -79,13 +75,13 @@ export async function PUT(
     }
 
     // Validate date formats
-    if (body.estimated_date_gps) {
+    if (body.user_assigned_date) {
       try {
-        new Date(body.estimated_date_gps).toISOString()
+        new Date(body.user_assigned_date).toISOString()
       } catch {
         return NextResponse.json({
           success: false,
-          error: 'Invalid date format for estimated_date_gps'
+          error: 'Invalid date format for user_assigned_date'
         }, { status: 422 })
       }
     }
@@ -129,12 +125,9 @@ export async function PUT(
     if (body.location_confidence !== undefined) updateData.location_confidence = body.location_confidence
     
     // GPS correlation fields
-    if (body.estimated_date_gps !== undefined) updateData.estimated_date_gps = body.estimated_date_gps
-    if (body.estimated_date_range_start !== undefined) updateData.estimated_date_range_start = body.estimated_date_range_start
-    if (body.estimated_date_range_end !== undefined) updateData.estimated_date_range_end = body.estimated_date_range_end
+    if (body.user_assigned_date !== undefined) updateData.user_assigned_date = body.user_assigned_date
     if (body.regional_tags !== undefined) updateData.regional_tags = body.regional_tags
     if (body.tag_source !== undefined) updateData.tag_source = body.tag_source
-    if (body.date_confidence !== undefined) updateData.date_confidence = body.date_confidence
     
     // Handle combined tags (regional + manual)
     if (body.regional_tags || body.manual_tags) {
@@ -160,8 +153,7 @@ export async function PUT(
         regional_tags,
         tags,
         tag_source,
-        estimated_date_gps,
-        date_confidence,
+        user_assigned_date,
         updated_at
       `)
       .single()
@@ -185,8 +177,7 @@ export async function PUT(
         regional_tags: updatedStory.regional_tags || [],
         tags: updatedStory.tags || [],
         tag_source: updatedStory.tag_source,
-        estimated_date_gps: updatedStory.estimated_date_gps,
-        date_confidence: updatedStory.date_confidence,
+        estimated_date_gps: updatedStory.user_assigned_date,
         updated_at: updatedStory.updated_at
       }
     }

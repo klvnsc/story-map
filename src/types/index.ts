@@ -3,11 +3,34 @@ export interface StoryCollection {
   highlight_id: string;
   name: string;
   story_count: number;
-  estimated_date?: Date;
   region?: string;
   country_code?: string;
   expedition_phase?: string;
+  
+  // NEW: Collection numbering in ASCENDING chronological order (1=earliest, 61=latest)
+  collection_index: number;
+  
+  // NEW: Expedition scope tracking
+  is_expedition_scope: boolean;
+  expedition_exclude_reason?: string;
+  
+  
+  // NEW: Regional tags and GPS correlation
+  regional_tags?: string[];
+  gps_track_ids?: number[];
 }
+
+export interface TagWithMetadata {
+  name: string;            // "Wales", "hiking", "peaceful"
+  type: TagType;          // "regional" | "activity" | "emotion"  
+  source: TagSource;      // "gps" | "manual" | "journal" | "ai"
+  confidence?: number;    // 0.0-1.0 for AI/GPS generated tags
+  created_at: string;     // ISO timestamp
+  created_by?: string;    // User ID for manual tags
+}
+
+export type TagType = "regional" | "activity" | "emotion";
+export type TagSource = "gps" | "manual" | "journal" | "ai";
 
 export interface Story {
   id: string;
@@ -21,29 +44,26 @@ export interface Story {
   longitude?: number;
   location_confidence?: 'high' | 'medium' | 'low' | 'estimated';
   content_type?: string[];
+  
+  // UNIFIED TAG SYSTEM
+  tags_unified?: TagWithMetadata[];
+  
+  // REGIONAL TAGS (separate from general tags)
+  regional_tags?: string[];
+  
+  // LEGACY TAG FIELDS (for backward compatibility)
+  /** @deprecated Use tags_unified instead */
   tags?: string[];
   
-  // DATE FIELDS (UPDATED WITH CLEAR NAMES)
-  /** Collection-based default date (fallback estimate) */
-  collection_default_date?: Date;
-  /** User-assigned date (manual input - most accurate) */
+  // DATE FIELDS (SIMPLIFIED)
+  /** User-assigned date (manual input - highest confidence) */
   user_assigned_date?: Date;
-  /** GPS-correlated date range start */
-  estimated_date_range_start?: Date;
-  /** GPS-correlated date range end */
-  estimated_date_range_end?: Date;
-  
-  // LEGACY FIELDS (TO BE REMOVED)
-  /** @deprecated Use collection_default_date instead */
-  estimated_date?: Date;
-  /** @deprecated Use user_assigned_date instead */
-  estimated_date_gps?: Date;
+  /** Future: GPS-estimated date (not implemented yet) */
+  gps_estimated_date?: Date;
   
   // METADATA FIELDS
-  /** Confidence level: 'manual' = user input (highest), 'collection_estimated' = fallback */
-  date_confidence?: 'manual' | 'collection_estimated' | 'high' | 'medium' | 'low';
-  /** Source of tags: 'manual' = user input, 'gps_estimated' = computed */
-  tag_source?: string;
+  /** Tag source: 'manual' = user input, null = default/auto */
+  tag_source?: 'manual' | null;
   time_added?: string;
 }
 

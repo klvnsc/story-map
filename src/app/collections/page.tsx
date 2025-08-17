@@ -12,7 +12,7 @@ interface Collection {
   story_count: number;
   region?: string;
   expedition_phase?: string;
-  estimated_date?: string;
+  collection_start_date?: string;
 }
 
 export default function Collections() {
@@ -44,7 +44,7 @@ export default function Collections() {
         const { data, error } = await supabase
           .from('story_collections')
           .select('*')
-          .order('collection_index');
+          .order('collection_start_date', { ascending: true });
 
         if (error) throw error;
         setCollections(data || []);
@@ -174,11 +174,11 @@ export default function Collections() {
                         </div>
                       )}
                       
-                      {collection.estimated_date && (
+                      {collection.collection_start_date && (
                         <div className="flex items-center justify-between">
                           <span>Date:</span>
                           <span className="font-medium">
-                            {new Date(collection.estimated_date).toLocaleDateString()}
+                            {new Date(collection.collection_start_date).toLocaleDateString()}
                           </span>
                         </div>
                       )}

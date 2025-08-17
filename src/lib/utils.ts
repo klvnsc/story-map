@@ -59,34 +59,30 @@ export function truncateText(text: string, maxLength: number): string {
 // =============================================================================
 
 /**
- * Get the best available date for a story with proper precedence
+ * Get the best available date for a story with simplified 3-tier precedence
  * 
  * **Priority Order:**
- * 1. user_assigned_date (manual input) - HIGHEST ACCURACY
- * 2. collection_default_date (collection estimate) - MEDIUM ACCURACY
- * 3. Legacy fields (for backward compatibility)
+ * 1. user_assigned_date (manual input) - HIGHEST CONFIDENCE
+ * 2. gps_estimated_date (GPS correlation) - MEDIUM CONFIDENCE (future)
+ * 3. collection.collection_start_date (collection fallback) - LOWEST CONFIDENCE
  * 
- * @param story - The story object
+ * @param story - The story object with optional collection data
  * @returns Date object or null if no date available
  */
-export function getBestAvailableDate(story: Story): Date | null {
-  // Priority 1: User-assigned date (manual input, most accurate)
+export function getBestAvailableDate(story: Story & { collection?: { collection_start_date?: string } }): Date | null {
+  // Priority 1: User-assigned date (manual input, highest confidence)
   if (story.user_assigned_date) {
     return new Date(story.user_assigned_date);
   }
   
-  // Priority 2: Collection default date (fallback estimate)
-  if (story.collection_default_date) {
-    return new Date(story.collection_default_date);
+  // Priority 2: GPS-estimated date (future implementation)
+  if (story.gps_estimated_date) {
+    return new Date(story.gps_estimated_date);
   }
   
-  // Legacy support (during transition period)
-  if (story.estimated_date_gps) {
-    return new Date(story.estimated_date_gps);
-  }
-  
-  if (story.estimated_date) {
-    return new Date(story.estimated_date);
+  // Priority 3: Collection start date (fallback from collection table)
+  if (story.collection?.collection_start_date) {
+    return new Date(story.collection.collection_start_date);
   }
   
   return null;
