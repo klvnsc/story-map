@@ -156,6 +156,12 @@ npx ts-node --project scripts/tsconfig.json scripts/renew-cdn-urls.ts collection
 
 # All collections with rate limiting
 npx ts-node --project scripts/tsconfig.json scripts/renew-cdn-urls.ts all --rate-limit 2000
+
+# Wales collection (Collection 59) - Fixed mapping
+npx ts-node --project scripts/tsconfig.json scripts/renew-cdn-urls.ts collection 59
+
+# UK Phase collections (55-61)
+npx ts-node --project scripts/tsconfig.json scripts/renew-cdn-urls.ts collections 55,56,57,58,59,60,61 --rate-limit 2000
 ```
 
 ### Database Operations

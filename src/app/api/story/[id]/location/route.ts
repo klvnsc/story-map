@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { validateCoordinates } from '@/lib/gps-correlation'
-import { getRegionalTags, createTag, addTag, unifiedTagsToLegacy, TagWithMetadata } from '@/lib/tags'
+import { getRegionalTags, createTag, addTag, unifiedTagsToLegacy } from '@/lib/tags'
+import { TagWithMetadata } from '@/types'
 
 // Story Location Update API Endpoint
 // PUT /api/story/{id}/location
@@ -109,7 +110,7 @@ export async function PUT(
     }
 
     // Prevent updates to excluded collections unless explicitly allowing it
-    if (!currentStory.story_collections.is_expedition_scope && body.tag_source !== 'excluded') {
+    if (!currentStory.story_collections.is_expedition_scope) {
       return NextResponse.json({
         success: false,
         error: 'Cannot update location for excluded collection (pre-expedition content)'

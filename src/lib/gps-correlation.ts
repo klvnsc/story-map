@@ -1,7 +1,8 @@
 // GPS Correlation Service Utilities
 // Handles GPS track correlation and regional tag generation
 
-import { createTag, TagWithMetadata } from '@/lib/tags'
+import { createTag } from '@/lib/tags'
+import { TagWithMetadata } from '@/types'
 
 export interface GPSCorrelationData {
   track_number: number

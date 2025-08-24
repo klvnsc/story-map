@@ -80,7 +80,7 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
 
         const tagSet = new Set<string>();
         let storiesWithTags = 0;
-        let totalStories = data?.length || 0;
+        const totalStories = data?.length || 0;
         
         data?.forEach(story => {
           if (story.tags_unified) {
@@ -277,8 +277,8 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
         }))
         .sort((a, b) => {
           // Sort by collection_index first, then by story_index
-          const aDate = new Date(a.collection?.estimated_date || "1970-01-01").getTime();
-          const bDate = new Date(b.collection?.estimated_date || "1970-01-01").getTime();
+          const aDate = new Date(a.collection?.collection_start_date || "1970-01-01").getTime();
+          const bDate = new Date(b.collection?.collection_start_date || "1970-01-01").getTime();
           
           if (aDate !== bDate) {
             return aDate - bDate;
@@ -287,15 +287,8 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
         }) || [];
 
         setStories(formattedStories);
-      } catch (error: any) {
-        console.error('Error fetching stories:', {
-          error,
-          message: error?.message,
-          details: error?.details,
-          hint: error?.hint,
-          code: error?.code,
-          filters: filters
-        });
+      } catch (error: unknown) {
+        console.error('Error fetching stories:', error, 'Filters:', filters);
         // Set empty state on error
         setStories([]);
         setTotalStories(0);

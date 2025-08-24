@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { isAuthenticated, getCurrentUser } from '@/lib/auth';
 import StoryBrowser from '@/components/StoryBrowser';
 import Navigation from '@/components/Navigation';
 
-export default function Stories() {
+function StoriesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
@@ -26,7 +26,6 @@ export default function Stories() {
 
     checkAuth();
   }, [router]);
-
 
   if (isLoading) {
     return (
@@ -51,5 +50,17 @@ export default function Stories() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function Stories() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    }>
+      <StoriesContent />
+    </Suspense>
   );
 }

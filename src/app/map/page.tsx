@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { isAuthenticated, getCurrentUser } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
@@ -8,11 +8,10 @@ import { StoryCollection } from '@/types';
 import MapView from '@/components/MapView';
 import Navigation from '@/components/Navigation';
 
-export default function MapPage() {
+function MapContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const selectedCollectionId = searchParams.get('collection');
-  
+  const [selectedPhase, setSelectedPhase] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<{ username: string } | null>(null);
   const [collections, setCollections] = useState<StoryCollection[]>([]);
@@ -32,7 +31,7 @@ export default function MapPage() {
     checkAuth();
   }, [router]);
 
-  // Load collections for filter dropdown
+  // Load collections for expedition phase extraction
   useEffect(() => {
     const loadCollections = async () => {
       const { data, error } = await supabase
@@ -53,14 +52,8 @@ export default function MapPage() {
     }
   }, [user]);
 
-  const handleCollectionChange = (collectionId: string) => {
-    const url = new URL(window.location.href);
-    if (collectionId === 'all') {
-      url.searchParams.delete('collection');
-    } else {
-      url.searchParams.set('collection', collectionId);
-    }
-    router.push(url.pathname + url.search);
+  const handlePhaseChange = (phase: string) => {
+    setSelectedPhase(phase);
   };
 
   if (isLoading) {
@@ -85,19 +78,19 @@ export default function MapPage() {
           <h1 className="text-xl font-semibold text-gray-900">Story Map</h1>
           
           <div className="flex items-center space-x-4">
-            <label htmlFor="collection-filter" className="text-sm font-medium text-gray-700">
-              Filter by Collection:
+            <label htmlFor="phase-filter" className="text-sm font-medium text-gray-700">
+              🗺️ Filter by Expedition Phase:
             </label>
             <select
-              id="collection-filter"
-              value={selectedCollectionId || 'all'}
-              onChange={(e) => handleCollectionChange(e.target.value)}
+              id="phase-filter"
+              value={selectedPhase}
+              onChange={(e) => handlePhaseChange(e.target.value)}
               className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
-              <option value="all">All Collections</option>
-              {collections.map((collection) => (
-                <option key={collection.id} value={collection.id}>
-                  {collection.name} ({collection.story_count} stories)
+              <option value="all">All Phases</option>
+              {[...new Set(collections.map(c => c.expedition_phase).filter(Boolean))].map((phase) => (
+                <option key={phase} value={phase}>
+                  {phase}
                 </option>
               ))}
             </select>
@@ -107,8 +100,20 @@ export default function MapPage() {
 
       {/* Map Container */}
       <div className="h-[calc(100vh-140px)]">
-        <MapView selectedCollectionId={selectedCollectionId || undefined} />
+        <MapView selectedPhase={selectedPhase === 'all' ? undefined : selectedPhase} />
       </div>
     </div>
+  );
+}
+
+export default function MapPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    }>
+      <MapContent />
+    </Suspense>
   );
 }

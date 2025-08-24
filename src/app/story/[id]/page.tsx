@@ -228,7 +228,7 @@ export default function StoryDetail() {
             location_confidence: story.location_confidence
           },
           current_tags: story.tags,
-          tag_source: story.tag_source
+          tag_source: story.tag_source || undefined
         });
         
         setGpsSuggestions(gpsContext.gps_suggestions || null);
@@ -930,8 +930,7 @@ export default function StoryDetail() {
                                   const gpsContext = await getStoryGPSContext({
                                     story_id: story.id,
                                     collection_name: story.collection.name,
-                                    collection_index: story.collection.collection_index,
-                                    user_assigned_date: dateValue
+                                    collection_index: story.collection.collection_index
                                   });
                                   
                                   // For manually set dates, override collection-based correlation
@@ -1004,7 +1003,7 @@ export default function StoryDetail() {
                                       location_confidence: story.location_confidence
                                     },
                                     current_tags: story.tags,
-                                    tag_source: story.tag_source
+                                    tag_source: story.tag_source || undefined
                                   });
                                   
                                   // Update suggestions in the GPS Smart Suggestions panel
@@ -1209,11 +1208,9 @@ export default function StoryDetail() {
                         <div className="text-xs text-gray-600">
                           Legacy Source: 
                           <span className="ml-1 font-medium">
-                            {story.tag_source === 'gps_estimated' ? 'GPS Estimated' :
-                              story.tag_source === 'manual' ? 'Manual' :
-                              story.tag_source === 'mixed' ? 'GPS + Manual' :
-                              story.tag_source === 'excluded' ? 'Excluded Collection' :
-                              story.tag_source}
+                            {story.tag_source === 'manual' ? 'Manual' :
+                              story.tag_source === null ? 'Auto' :
+                              story.tag_source || 'N/A'}
                           </span>
                         </div>
                       )}

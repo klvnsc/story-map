@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { createTag, TagWithMetadata } from '@/lib/tags'
+import { createTag } from '@/lib/tags'
+import { TagWithMetadata } from '@/types'
 
 // GPS Track Correlation API Endpoint
 // GET /api/gps-track-for-date?date=2025-07-02&collection_index=1
