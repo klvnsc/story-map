@@ -55,7 +55,7 @@ export default function Collections() {
         if (error) throw error;
         
         console.log('✅ Collections fetched:', data?.length || 0);
-        setCollections(data || []);
+        setCollections((data as unknown as Collection[]) || []);
       } catch (error) {
         console.error('❌ Error fetching collections:', error);
       } finally {

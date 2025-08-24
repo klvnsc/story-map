@@ -15,7 +15,7 @@ if (typeof window !== 'undefined') {
 }
 
 // Create client with error handling
-let supabase: any;
+let supabase: ReturnType<typeof createSupabaseClient>;
 try {
   supabase = createSupabaseClient(supabaseUrl, supabaseKey);
 } catch (error) {

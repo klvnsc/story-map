@@ -91,17 +91,10 @@ export async function PUT(
     // First, get the current story to check its collection status
     const { data: currentStory, error: fetchError } = await supabase
       .from('stories')
-      .select(`
-        *,
-        story_collections!inner(
-          collection_index,
-          is_expedition_scope,
-          name
-        )
-      `)
+      .select('*')
       .eq('id', storyId)
       .single()
-
+      
     if (fetchError || !currentStory) {
       return NextResponse.json({
         success: false,
@@ -109,8 +102,22 @@ export async function PUT(
       }, { status: 404 })
     }
 
+    // Get the collection data separately
+    const { data: collection, error: collectionError } = await supabase
+      .from('story_collections')
+      .select('collection_index, is_expedition_scope, name')
+      .eq('id', currentStory.collection_id as string)
+      .single()
+
+    if (collectionError || !collection) {
+      return NextResponse.json({
+        success: false,
+        error: 'Collection not found'
+      }, { status: 404 })
+    }
+
     // Prevent updates to excluded collections unless explicitly allowing it
-    if (!currentStory.story_collections.is_expedition_scope) {
+    if (!collection.is_expedition_scope) {
       return NextResponse.json({
         success: false,
         error: 'Cannot update location for excluded collection (pre-expedition content)'
@@ -132,7 +139,7 @@ export async function PUT(
     
     // Handle unified tags - convert legacy regional_tags to unified format
     if (body.regional_tags || body.manual_tags) {
-      let currentUnifiedTags: TagWithMetadata[] = currentStory.tags_unified || []
+      let currentUnifiedTags: TagWithMetadata[] = (currentStory.tags_unified as TagWithMetadata[]) || []
       
       // If regional_tags provided, update regional tags in unified format
       if (body.regional_tags !== undefined) {
@@ -198,22 +205,22 @@ export async function PUT(
     }
 
     // Generate legacy fields from unified tags for response
-    const unifiedTags: TagWithMetadata[] = updatedStory.tags_unified || []
+    const unifiedTags: TagWithMetadata[] = (updatedStory.tags_unified as TagWithMetadata[]) || []
     const regionalTags = getRegionalTags(unifiedTags)
     
     const response: StoryLocationUpdateResponse = {
       success: true,
       data: {
-        id: updatedStory.id,
-        location_name: updatedStory.location_name,
-        latitude: updatedStory.latitude ? parseFloat(updatedStory.latitude) : null,
-        longitude: updatedStory.longitude ? parseFloat(updatedStory.longitude) : null,
-        location_confidence: updatedStory.location_confidence,
+        id: updatedStory.id as string,
+        location_name: updatedStory.location_name as string | null,
+        latitude: updatedStory.latitude ? parseFloat(updatedStory.latitude as string) : null,
+        longitude: updatedStory.longitude ? parseFloat(updatedStory.longitude as string) : null,
+        location_confidence: updatedStory.location_confidence as 'high' | 'medium' | 'low' | 'estimated' | null,
         regional_tags: unifiedTagsToLegacy(regionalTags),
         tags: unifiedTagsToLegacy(unifiedTags),
-        tag_source: updatedStory.tag_source,
-        estimated_date_gps: updatedStory.user_assigned_date,
-        updated_at: updatedStory.updated_at
+        tag_source: updatedStory.tag_source as 'gps_estimated' | 'manual' | 'mixed' | 'excluded' | null,
+        estimated_date_gps: updatedStory.user_assigned_date as string | null,
+        updated_at: updatedStory.updated_at as string
       }
     }
 
