@@ -44,7 +44,7 @@ function MapContent() {
         return;
       }
 
-      setCollections(data || []);
+      setCollections((data as unknown as StoryCollection[]) || []);
     };
 
     if (user) {

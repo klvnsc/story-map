@@ -41,16 +41,23 @@ export default function Collections() {
 
   useEffect(() => {
     const fetchCollections = async () => {
+      console.log('🔍 Starting to fetch collections...');
       try {
+        console.log('📡 Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 30));
+        console.log('🔑 Has Supabase key:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+        
         const { data, error } = await supabase
           .from('story_collections')
           .select('*')
           .order('collection_start_date', { ascending: true });
 
+        console.log('📊 Query result:', { data: data?.length || 0, error });
         if (error) throw error;
-        setCollections(data || []);
+        
+        console.log('✅ Collections fetched:', data?.length || 0);
+        setCollections((data as unknown as Collection[]) || []);
       } catch (error) {
-        console.error('Error fetching collections:', error);
+        console.error('❌ Error fetching collections:', error);
       } finally {
         setCollectionsLoading(false);
       }
@@ -70,8 +77,11 @@ export default function Collections() {
     };
 
     if (user) {
+      console.log('👤 User authenticated, fetching data...');
       fetchCollections();
       fetchActualStoryCount();
+    } else {
+      console.log('🚫 No user found, skipping data fetch');
     }
   }, [user]);
 

@@ -1,0 +1,227 @@
+#!/usr/bin/env ts-node
+
+import { Command } from 'commander';
+import * as fs from 'fs';
+import * as path from 'path';
+import { 
+  loadCollectionsManifest, 
+  getCollectionInfoFromManifest, 
+  getAllCollectionNumbersFromManifest,
+  getCollectionsNeedingFetch,
+  getHighlightIdFromLegacyCsv
+} from './utils/manifest-collection-mapping';
+import { fetchCollectionHtml } from './steps/step1-fetch-html';
+import { parseCollectionHtml } from './steps/step2-parse-html';
+
+// Load environment variables
+require('dotenv').config({ path: '.env.local' });
+
+const program = new Command();
+
+program
+  .name('regenerate-collections')
+  .description('Regenerate all collection CSV/HTML files using the new chronological numbering from manifest')
+  .version('1.0.0');
+
+program
+  .command('all')
+  .description('Regenerate all collections using manifest mapping')
+  .option('--dry-run', 'Show what would be done without executing')
+  .option('--rate-limit <ms>', 'Rate limit between API calls (ms)', '2000')
+  .action(async (options) => {
+    try {
+      console.log('🔄 Regenerating all collections from manifest...\n');
+      
+      const manifest = loadCollectionsManifest();
+      const allCollections = getAllCollectionNumbersFromManifest();
+      
+      console.log(`📋 Manifest loaded: ${manifest.metadata.total_collections} collections`);
+      console.log(`📅 Created: ${manifest.metadata.created}`);
+      console.log(`📊 Collections to process: ${allCollections.length}\n`);
+      
+      if (options.dryRun) {
+        console.log('🔍 DRY RUN - Showing what would be done:\n');
+      }
+      
+      let successCount = 0;
+      let skipCount = 0;
+      let errorCount = 0;
+      const rateLimitMs = parseInt(options.rateLimit);
+      
+      for (const collectionNumber of allCollections) {
+        try {
+          const collectionInfo = getCollectionInfoFromManifest(collectionNumber);
+          
+          console.log(`\n📁 Collection ${collectionNumber}: ${collectionInfo.name}`);
+          console.log(`   Phase: ${collectionInfo.expeditionPhase}`);
+          console.log(`   Original Index: ${collectionInfo.originalIndex || 'New'}`);
+          
+          // Determine Instagram ID source
+          let instagramId = collectionInfo.highlightId;
+          
+          if (!instagramId && collectionInfo.originalIndex) {
+            // Try to get from legacy CSV
+            try {
+              instagramId = getHighlightIdFromLegacyCsv(collectionInfo.originalIndex);
+              console.log(`   Instagram ID: ${instagramId} (from legacy CSV)`);
+            } catch (error) {
+              console.log(`   ❌ No Instagram ID found for original index ${collectionInfo.originalIndex}`);
+              errorCount++;
+              continue;
+            }
+          } else if (instagramId) {
+            console.log(`   Instagram ID: ${instagramId} (from manifest)`);
+          } else {
+            console.log(`   ⚠️  No Instagram ID available - skipping`);
+            skipCount++;
+            continue;
+          }
+          
+          const csvPath = path.join(process.cwd(), 'data-story-collection', `${collectionNumber}.csv`);
+          const htmlPath = path.join(process.cwd(), 'data-story-collection', `${collectionNumber}.html`);
+          
+          if (options.dryRun) {
+            console.log(`   Would create: ${csvPath}`);
+            console.log(`   Would create: ${htmlPath}`);
+            successCount++;
+            continue;
+          }
+          
+          // Step 1: Fetch HTML
+          console.log(`   🌐 Fetching HTML data...`);
+          await fetchCollectionHtml(collectionNumber, instagramId, {
+            outputDir: path.join(process.cwd(), 'data-story-collection'),
+            rateLimitMs
+          });
+          
+          // Step 2: Parse HTML to CSV
+          console.log(`   📄 Parsing HTML to CSV...`);
+          await parseCollectionHtml(collectionNumber, {
+            inputDir: path.join(process.cwd(), 'data-story-collection'),
+            outputDir: path.join(process.cwd(), 'data-story-collection')
+          });
+          
+          console.log(`   ✅ Generated ${collectionNumber}.csv and ${collectionNumber}.html`);
+          successCount++;
+          
+          // Rate limiting
+          if (rateLimitMs > 0) {
+            console.log(`   ⏳ Rate limiting: ${rateLimitMs}ms`);
+            await new Promise(resolve => setTimeout(resolve, rateLimitMs));
+          }
+          
+        } catch (error) {
+          console.error(`   ❌ Error processing collection ${collectionNumber}:`, error.message);
+          errorCount++;
+        }
+      }
+      
+      // Summary
+      console.log('\n🎯 Regeneration Summary:');
+      console.log(`   ✅ Success: ${successCount}`);
+      console.log(`   ⚠️  Skipped: ${skipCount}`);  
+      console.log(`   ❌ Errors: ${errorCount}`);
+      console.log(`   📊 Total: ${allCollections.length}`);
+      
+      if (options.dryRun) {
+        console.log('\n💡 To execute, run without --dry-run flag');
+      }
+      
+    } catch (error) {
+      console.error('❌ Failed to regenerate collections:', error.message);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('missing')
+  .description('Only regenerate collections that are missing CSV files')
+  .option('--dry-run', 'Show what would be done without executing')  
+  .option('--rate-limit <ms>', 'Rate limit between API calls (ms)', '2000')
+  .action(async (options) => {
+    try {
+      console.log('🔍 Finding collections that need CSV/HTML files...\n');
+      
+      const missingCollections = getCollectionsNeedingFetch();
+      
+      if (missingCollections.length === 0) {
+        console.log('✅ All collections already have CSV files - nothing to do!');
+        return;
+      }
+      
+      console.log(`📋 Collections needing files: ${missingCollections.join(', ')}\n`);
+      
+      if (options.dryRun) {
+        console.log('🔍 DRY RUN - Would process these collections:');
+        missingCollections.forEach(num => {
+          const info = getCollectionInfoFromManifest(num);
+          console.log(`   ${num}: ${info.name} (${info.expeditionPhase})`);
+        });
+        return;
+      }
+      
+      // Process missing collections
+      let successCount = 0;
+      let errorCount = 0;
+      const rateLimitMs = parseInt(options.rateLimit);
+      
+      for (const collectionNumber of missingCollections) {
+        try {
+          const collectionInfo = getCollectionInfoFromManifest(collectionNumber);
+          
+          console.log(`\n📁 Collection ${collectionNumber}: ${collectionInfo.name}`);
+          
+          let instagramId = collectionInfo.highlightId;
+          
+          if (!instagramId && collectionInfo.originalIndex) {
+            instagramId = getHighlightIdFromLegacyCsv(collectionInfo.originalIndex);
+          }
+          
+          if (!instagramId) {
+            console.log(`   ❌ No Instagram ID available - skipping`);
+            errorCount++;
+            continue;
+          }
+          
+          console.log(`   🌐 Fetching and parsing...`);
+          
+          // Fetch and parse
+          await fetchCollectionHtml(collectionNumber, instagramId, {
+            outputDir: path.join(process.cwd(), 'data-story-collection'),
+            rateLimitMs
+          });
+          
+          await parseCollectionHtml(collectionNumber, {
+            inputDir: path.join(process.cwd(), 'data-story-collection'),
+            outputDir: path.join(process.cwd(), 'data-story-collection')
+          });
+          
+          console.log(`   ✅ Success`);
+          successCount++;
+          
+          if (rateLimitMs > 0) {
+            await new Promise(resolve => setTimeout(resolve, rateLimitMs));
+          }
+          
+        } catch (error) {
+          console.error(`   ❌ Error:`, error.message);
+          errorCount++;
+        }
+      }
+      
+      console.log('\n🎯 Results:');
+      console.log(`   ✅ Success: ${successCount}`);
+      console.log(`   ❌ Errors: ${errorCount}`);
+      
+    } catch (error) {
+      console.error('❌ Failed:', error.message);
+      process.exit(1);
+    }
+  });
+
+// Show help by default
+if (process.argv.length <= 2) {
+  program.help();
+}
+
+program.parse();

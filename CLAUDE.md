@@ -179,6 +179,15 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=your_mapbox_access_token
 ```
 
+### Deployment
+**Production URL**: https://story-map-three.vercel.app/
+
+**Vercel Deployment**:
+- Connected to GitHub repository `klvnsc/story-map`
+- Auto-deploys on main branch pushes
+- Environment variables configured for Supabase + Mapbox
+- Login: admin/123 (development credentials)
+
 ## GPS-Story Correlation Strategy
 
 ### ✅ Expedition Structure from Collections Manifest

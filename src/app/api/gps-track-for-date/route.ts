@@ -203,8 +203,8 @@ export async function GET(request: NextRequest) {
     let bestDistance = Infinity
     
     for (const track of expeditionTracks) {
-      const trackStart = new Date(track.start_date)
-      const trackEnd = new Date(track.end_date)
+      const trackStart = new Date(track.start_date as string)
+      const trackEnd = new Date(track.end_date as string)
       
       // Exact match within track date range
       if (targetDate >= trackStart && targetDate <= trackEnd) {
@@ -224,8 +224,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Calculate confidence based on date proximity
-    const trackStart = new Date(bestTrack.start_date)
-    const trackEnd = new Date(bestTrack.end_date)
+    const trackStart = new Date(bestTrack.start_date as string)
+    const trackEnd = new Date(bestTrack.end_date as string)
     let confidence: 'high' | 'medium' | 'low' = 'low'
     
     if (targetDate >= trackStart && targetDate <= trackEnd) {
@@ -237,20 +237,20 @@ export async function GET(request: NextRequest) {
     const response: GPSTrackResponse = {
       success: true,
       data: {
-        track_number: bestTrack.track_number,
-        track_title: bestTrack.title,
+        track_number: bestTrack.track_number as number,
+        track_title: bestTrack.title as string,
         date_range: {
-          start: bestTrack.start_date,
-          end: bestTrack.end_date
+          start: bestTrack.start_date as string,
+          end: bestTrack.end_date as string
         },
-        expedition_phase: bestTrack.expedition_phase || expeditionPhase,
-        region: bestTrack.region || phaseConfig.regions[0],
-        cities: bestTrack.cities || [],
+        expedition_phase: (bestTrack.expedition_phase as string) || expeditionPhase,
+        region: (bestTrack.region as string) || phaseConfig.regions[0],
+        cities: (bestTrack.cities as string[]) || [],
         regional_tags: phaseConfig.regions.map(regionName => 
           createTag(regionName, 'regional', 'gps', confidence === 'high' ? 1.0 : confidence === 'medium' ? 0.8 : 0.6)
         ),
         classification: bestTrack.classification as 'moving' | 'rest',
-        distance_km: bestTrack.distance_km ? parseFloat(bestTrack.distance_km) : undefined,
+        distance_km: bestTrack.distance_km ? parseFloat(bestTrack.distance_km as string) : undefined,
         confidence
       }
     }

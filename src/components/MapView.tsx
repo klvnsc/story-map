@@ -97,7 +97,7 @@ export default function MapView({ selectedPhase }: MapViewProps) {
       return;
     }
 
-    setAllStories(data || []);
+    setAllStories((data as unknown as StoryWithCollection[]) || []);
   };
 
   // Load expedition tracks for context
@@ -112,7 +112,7 @@ export default function MapView({ selectedPhase }: MapViewProps) {
       return;
     }
 
-    setExpeditionTracks(data || []);
+    setExpeditionTracks((data as unknown as ExpeditionTrack[]) || []);
   };
 
   useEffect(() => {

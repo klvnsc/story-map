@@ -85,7 +85,7 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
         data?.forEach(story => {
           if (story.tags_unified) {
             storiesWithTags++;
-            const regionalTags = getRegionalTags(story.tags_unified);
+            const regionalTags = getRegionalTags((story.tags_unified as TagWithMetadata[]) || []);
             regionalTags.forEach(tag => tagSet.add(tag.name));
           }
         });
@@ -122,7 +122,7 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
         }
         
         console.log('Collections loaded:', data?.length || 0);
-        setCollections(data || []);
+        setCollections((data as unknown as StoryCollection[]) || []);
       } catch (error) {
         console.error('Error fetching collections:', error);
       }
@@ -189,7 +189,7 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
         let filteredCollectionIds: string[] = [];
         
         if (filters.phase) {
-          filteredCollectionIds = collectionsData
+          filteredCollectionIds = (collectionsData as unknown as StoryCollection[])
             ?.filter(col => col.expedition_phase === filters.phase)
             .map(col => col.id) || [];
           
@@ -277,16 +277,16 @@ export default function StoryBrowser({ initialCollectionId = '' }: StoryBrowserP
         }))
         .sort((a, b) => {
           // Sort by collection_index first, then by story_index
-          const aDate = new Date(a.collection?.collection_start_date || "1970-01-01").getTime();
-          const bDate = new Date(b.collection?.collection_start_date || "1970-01-01").getTime();
+          const aDate = new Date((a.collection?.collection_start_date as string) || "1970-01-01").getTime();
+          const bDate = new Date((b.collection?.collection_start_date as string) || "1970-01-01").getTime();
           
           if (aDate !== bDate) {
             return aDate - bDate;
           }
-          return a.story_index - b.story_index;
+          return (a.story_index as number) - (b.story_index as number);
         }) || [];
 
-        setStories(formattedStories);
+        setStories(formattedStories as unknown as Story[]);
       } catch (error: unknown) {
         console.error('Error fetching stories:', error, 'Filters:', filters);
         // Set empty state on error

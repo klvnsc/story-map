@@ -1,0 +1,641 @@
+{
+  "metadata": {
+    "version": "1.1.0",
+    "created": "2025-08-15",
+    "description": "Complete collection metadata with corrected 7-phase expedition structure and accurate dates",
+    "total_collections": 61,
+    "pre_expedition_collections": "1-8",
+    "north_china_collections": "9-10", 
+    "expedition_collections": "11-61",
+    "last_updated": "2025-08-15T12:00:00Z"
+  },
+  "expedition_phases": {
+    "pre_expedition": {
+      "name": "Pre-Expedition Adventures",
+      "date_range": "2022-01-01_2023-12-31",
+      "description": "Adventures before the main expedition: India/Ladakh, Indonesia, Japan cycling",
+      "collections": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+      "story_count": 453
+    },
+    "north_china": {
+      "name": "North China & Mongolia - Expedition Start",
+      "date_range": "2024-06-29_2024-07-18", 
+      "description": "Mongolia Winter, Mongolia, and expedition Q&A preparation",
+      "collections": [10, 11],
+      "story_count": 274
+    },
+    "central_asia": {
+      "name": "Central Asia", 
+      "date_range": "2024-07-18_2024-09-25",
+      "description": "Kyrgyzstan → Kazakhstan → Uzbekistan → Russia → Tajikistan",
+      "collections": [12, 13, 14, 15, 16, 17, 18, 19, 20, 21],
+      "story_count": 707
+    },
+    "middle_east_caucasus": {
+      "name": "Middle East & Caucasus",
+      "date_range": "2024-10-06_2024-11-27", 
+      "description": "Georgia → Armenia → Turkey",
+      "collections": [22, 23, 24, 25, 26, 27, 28, 29, 30],
+      "story_count": 674
+    },
+    "europe_part1": {
+      "name": "Europe Part 1",
+      "date_range": "2024-12-06_2025-02-07",
+      "description": "Bulgaria → Greece → Italy → MFW → France → Spain",
+      "collections": [31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41],
+      "story_count": 798
+    },
+    "africa": {
+      "name": "Africa",
+      "date_range": "2025-02-01_2025-04-24",
+      "description": "Morocco expedition with Italy crossings",
+      "collections": [42, 43, 44, 45, 46, 47, 48, 49, 50],
+      "story_count": 262
+    },
+    "europe_uk_scotland": {
+      "name": "Europe Part 2 & UK/Scotland - Expedition End",
+      "date_range": "2025-04-24_2025-10-30",
+      "description": "Germany → England → Wales → Scotland - Expedition finale", 
+      "collections": [51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61],
+      "story_count": 120
+    }
+  },
+  "collection_mapping": {
+    "old_to_new": {
+      "61": 1, "60": 2, "59": 3, "58": 4, "57": 5, "56": 6, "55": 7, "54": 8, "53": 9, "52": 10,
+      "51": 11, "50": 12, "49": 13, "48": 14, "47": 15, "46": 16, "45": 17, "44": 18, "43": 19, "42": 20, "41": 21, "40": 22, "39": 23, "38": 24, "37": 25, "36": 26,
+      "35": 27, "34": 28, "33": 29, "32": 30, "31": 31, "30": 32, "29": 33, "28": 34, "27": 35, "26": 36, "25": 37, "24": 38, "23": 39, "22": 40, "21": 41, "20": 42, "19": 43, "18": 44, "17": 45, "16": 46,
+      "15": 47, "14": 48, "13": 49, "12": 50, "11": 51, "10": 52, "9": 53, "8": 54, "7": 55, "6": 56, "5": 57, "4": 58, "3": 59, "2": 60, "1": 61
+    },
+    "new_to_old": {
+      "1": 61, "2": 60, "3": 59, "4": 58, "5": 57, "6": 56, "7": 55, "8": 54, "9": 53, "10": 52,
+      "11": 51, "12": 50, "13": 49, "14": 48, "15": 47, "16": 46, "17": 45, "18": 44, "19": 43, "20": 42, "21": 41, "22": 40, "23": 39, "24": 38, "25": 37, "26": 36,
+      "27": 35, "28": 34, "29": 33, "30": 32, "31": 31, "32": 30, "33": 29, "34": 28, "35": 27, "36": 26, "37": 25, "38": 24, "39": 23, "40": 22, "41": 21, "42": 20, "43": 19, "44": 18, "45": 17, "46": 16,
+      "47": 15, "48": 14, "49": 13, "50": 12, "51": 11, "52": 10, "53": 9, "54": 8, "55": 7, "56": 6, "57": 5, "58": 4, "59": 3, "60": 2, "61": 1
+    }
+  },
+  "collections": {
+    "1": {
+      "name": "LADAKH 1",
+      "original_index": 61,
+      "expedition_phase": "pre_expedition",
+      "estimated_date": "2022-06-01",
+      "region": "India",
+      "story_count": 99,
+      "instagram_id": "18064808941402631:breakingcycles.life",
+      "description": "Ladakh adventures - earliest content"
+    },
+    "2": {
+      "name": "LADAKH 2", 
+      "original_index": 60,
+      "expedition_phase": "pre_expedition",
+      "estimated_date": "2022-06-15",
+      "region": "India",
+      "story_count": 99,
+      "instagram_id": "17984999519177523:breakingcycles.life"
+    },
+    "3": {
+      "name": "NEW DELHI",
+      "original_index": 59,
+      "expedition_phase": "pre_expedition", 
+      "estimated_date": "2022-07-01",
+      "region": "India",
+      "story_count": 59,
+      "instagram_id": "17909494379698894:breakingcycles.life"
+    },
+    "4": {
+      "name": "INDONESIA",
+      "original_index": 58,
+      "expedition_phase": "pre_expedition",
+      "estimated_date": "2022-08-01", 
+      "region": "Indonesia",
+      "story_count": 29,
+      "instagram_id": "18001194349870466:breakingcycles.life"
+    },
+    "5": {
+      "name": "下関 - 津山 🚴 上集",
+      "original_index": 57,
+      "expedition_phase": "pre_expedition",
+      "estimated_date": "2022-09-01",
+      "region": "Japan", 
+      "story_count": 44,
+      "instagram_id": "17893662158920583:breakingcycles.life",
+      "description": "Japan cycling - Part 1"
+    },
+    "6": {
+      "name": "下関 - 津山 🚴 中集",
+      "original_index": 56,
+      "expedition_phase": "pre_expedition",
+      "estimated_date": "2022-09-15",
+      "region": "Japan",
+      "story_count": 100,
+      "instagram_id": "17847537087090006:breakingcycles.life",
+      "description": "Japan cycling - Part 2"
+    },
+    "7": {
+      "name": "下関 - 津山 🚴 下集", 
+      "original_index": 55,
+      "expedition_phase": "pre_expedition",
+      "estimated_date": "2022-10-01",
+      "region": "Japan",
+      "story_count": 100,
+      "instagram_id": "18048074443469949:breakingcycles.life",
+      "description": "Japan cycling - Part 3"
+    },
+    "8": {
+      "name": "日光",
+      "original_index": 54,
+      "expedition_phase": "pre_expedition",
+      "estimated_date": "2022-10-15",
+      "region": "Japan",
+      "story_count": 24,
+      "instagram_id": "18202733329277692:breakingcycles.life"
+    },
+    "9": {
+      "name": "MONGOLIA WINTER",
+      "original_index": 53,
+      "expedition_phase": "north_china", 
+      "estimated_date": "2024-02-24",
+      "region": "Mongolia",
+      "story_count": 100,
+      "instagram_id": "17958474221619709:breakingcycles.life"
+    },
+    "10": {
+      "name": "Mongolia 🇲🇳",
+      "original_index": 52,
+      "expedition_phase": "north_china",
+      "estimated_date": "2024-06-29",
+      "region": "Mongolia",
+      "story_count": 74,
+      "instagram_id": "17977584701709245:breakingcycles.life"
+    },
+    "11": {
+      "name": "Q&A",
+      "original_index": 51,
+      "expedition_phase": "north_china",
+      "estimated_date": "2024-07-20",
+      "region": "General",
+      "story_count": 100,
+      "instagram_id": "18447928921046336:breakingcycles.life",
+      "description": "Expedition Q&A content"
+    },
+    "12": {
+      "name": "Kyrgyzstan 🇰🇬",
+      "original_index": 50,
+      "expedition_phase": "central_asia", 
+      "estimated_date": "2024-07-23",
+      "region": "Central Asia",
+      "story_count": 89,
+      "instagram_id": "18450623119021935:breakingcycles.life",
+      "description": "Expedition start in Kyrgyzstan"
+    },
+    "13": {
+      "name": "Kazakhstan 🇰🇿 1",
+      "original_index": 49,
+      "expedition_phase": "central_asia",
+      "estimated_date": "2024-07-19",
+      "region": "Central Asia", 
+      "story_count": 89,
+      "instagram_id": "18008045279547582:breakingcycles.life"
+    },
+    "14": {
+      "name": "Kazakhstan 🇰🇿 2", 
+      "original_index": 48,
+      "expedition_phase": "central_asia",
+      "estimated_date": "2024-08-20",
+      "region": "Central Asia",
+      "story_count": 98,
+      "instagram_id": "18058314775659069:breakingcycles.life"
+    },
+    "15": {
+      "name": "Uzbekistan 🇺🇿 1",
+      "original_index": 47,
+      "expedition_phase": "central_asia",
+      "estimated_date": "2024-08-08",
+      "region": "Central Asia",
+      "story_count": 93,
+      "instagram_id": "18122776447372808:breakingcycles.life"
+    },
+    "16": {
+      "name": "Uzbekistan 🇺🇿 2",
+      "original_index": 46,
+      "expedition_phase": "central_asia",
+      "estimated_date": "2024-09-10", 
+      "region": "Central Asia",
+      "story_count": 100,
+      "instagram_id": "18075540595554032:breakingcycles.life"
+    },
+    "17": {
+      "name": "Uzbekistan 🇺🇿 3",
+      "original_index": 45,
+      "expedition_phase": "central_asia",
+      "estimated_date": "2024-09-17",
+      "region": "Central Asia",
+      "story_count": 100,
+      "instagram_id": "17952841943822134:breakingcycles.life"
+    },
+    "18": {
+      "name": "Kazakhstan 🇰🇿 3",
+      "original_index": 44,
+      "expedition_phase": "central_asia",
+      "estimated_date": "2024-08-31",
+      "region": "Central Asia", 
+      "story_count": 25,
+      "instagram_id": "18053779645660840:breakingcycles.life"
+    },
+    "19": {
+      "name": "Kazakhstan 🇰🇿 4",
+      "original_index": 43,
+      "expedition_phase": "central_asia",
+      "estimated_date": "2024-09-25",
+      "region": "Central Asia",
+      "story_count": 100,
+      "instagram_id": "18103024393441878:breakingcycles.life"
+    },
+    "20": {
+      "name": "Russia 🇷🇺",
+      "original_index": 42,
+      "expedition_phase": "central_asia",
+      "estimated_date": "2024-07-18",
+      "region": "Russia",
+      "story_count": 22,
+      "instagram_id": "17965710818773208:breakingcycles.life"
+    },
+    "21": {
+      "name": "Tajikistan 🇹🇯",
+      "original_index": 41,
+      "expedition_phase": "central_asia",
+      "estimated_date": "2024-07-29",
+      "region": "Central Asia",
+      "story_count": 26,
+      "instagram_id": "18040006774818828:breakingcycles.life"
+    },
+    "22": {
+      "name": "Georgia 🇬🇪 1", 
+      "original_index": 40,
+      "expedition_phase": "middle_east_caucasus",
+      "estimated_date": "2024-10-06",
+      "region": "Caucasus",
+      "story_count": 99,
+      "instagram_id": "17858220288266313:breakingcycles.life"
+    },
+    "23": {
+      "name": "Georgia 🇬🇪 2",
+      "original_index": 39,
+      "expedition_phase": "middle_east_caucasus",
+      "estimated_date": "2024-10-11",
+      "region": "Caucasus",
+      "story_count": 98,
+      "instagram_id": "18011275097400978:breakingcycles.life"
+    },
+    "24": {
+      "name": "Armenia 🇦🇲 1",
+      "original_index": 38,
+      "expedition_phase": "middle_east_caucasus",
+      "estimated_date": "2024-10-21",
+      "region": "Caucasus",
+      "story_count": 100,
+      "instagram_id": "18137731558325083:breakingcycles.life"
+    },
+    "25": {
+      "name": "Armenia 🇦🇲2",
+      "original_index": 37,
+      "expedition_phase": "middle_east_caucasus",
+      "estimated_date": "2024-10-24",
+      "region": "Caucasus",
+      "story_count": 99,
+      "instagram_id": "18044368168879405:breakingcycles.life"
+    },
+    "26": {
+      "name": "Armenia 🇦🇲 3",
+      "original_index": 36,
+      "expedition_phase": "middle_east_caucasus", 
+      "estimated_date": "2024-10-30",
+      "region": "Caucasus",
+      "story_count": 100,
+      "instagram_id": "18040879571160857:breakingcycles.life"
+    },
+    "27": {
+      "name": "Georgia 🇬🇪 3",
+      "original_index": 35,
+      "expedition_phase": "middle_east_caucasus",
+      "estimated_date": "2024-11-03",
+      "region": "Caucasus",
+      "story_count": 9,
+      "instagram_id": "17932289318951599:breakingcycles.life"
+    },
+    "28": {
+      "name": "Turkey 🇹🇷 1",
+      "original_index": 34,
+      "expedition_phase": "middle_east_caucasus",
+      "estimated_date": "2024-11-09",
+      "region": "Turkey",
+      "story_count": 74,
+      "instagram_id": "18066993982649869:breakingcycles.life"
+    },
+    "29": {
+      "name": "Turkey 🇹🇷 2",
+      "original_index": 33,
+      "expedition_phase": "middle_east_caucasus",
+      "estimated_date": "2024-11-18",
+      "region": "Turkey",
+      "story_count": 100,
+      "instagram_id": "18037664711047569:breakingcycles.life"
+    },
+    "30": {
+      "name": "Turkey 🇹🇷 3",
+      "original_index": 32,
+      "expedition_phase": "middle_east_caucasus",
+      "estimated_date": "2024-11-27",
+      "region": "Turkey", 
+      "story_count": 100,
+      "instagram_id": "17987636276756920:breakingcycles.life"
+    },
+    "31": {
+      "name": "Bulgaria 🇧🇬",
+      "original_index": 31,
+      "expedition_phase": "europe_part1",
+      "estimated_date": "2024-12-06",
+      "region": "Europe",
+      "story_count": 100,
+      "instagram_id": "18052837759821656:breakingcycles.life"
+    },
+    "32": {
+      "name": "Greece 🇬🇷 I",
+      "original_index": 30,
+      "expedition_phase": "europe_part1",
+      "estimated_date": "2024-12-10",
+      "region": "Europe",
+      "story_count": 79,
+      "instagram_id": "17991220025742686:breakingcycles.life"
+    },
+    "33": {
+      "name": "Greece 🇬🇷 II",
+      "original_index": 29,
+      "expedition_phase": "europe_part1",
+      "estimated_date": "2024-12-19",
+      "region": "Europe",
+      "story_count": 100,
+      "instagram_id": "18044152921980963:breakingcycles.life"
+    },
+    "34": {
+      "name": "Souls pt. 1",
+      "original_index": 28,
+      "expedition_phase": "europe_part1",
+      "estimated_date": "2024-07-11",
+      "region": "General",
+      "story_count": 70,
+      "instagram_id": "17916693795030579:breakingcycles.life"
+    },
+    "35": {
+      "name": "Italy 🇮🇹 I",
+      "original_index": 27,
+      "expedition_phase": "europe_part1",
+      "estimated_date": "2024-12-27",
+      "region": "Europe",
+      "story_count": 100,
+      "instagram_id": "17889230265118966:breakingcycles.life"
+    },
+    "36": {
+      "name": "Italy 🇮🇹 II",
+      "original_index": 26,
+      "expedition_phase": "europe_part1",
+      "estimated_date": "2025-01-09",
+      "region": "Europe",
+      "story_count": 100,
+      "instagram_id": "18102396352485795:breakingcycles.life"
+    },
+    "37": {
+      "name": "MFW2025 Vol I",
+      "original_index": 25,
+      "expedition_phase": "europe_part1",
+      "estimated_date": "2025-01-18",
+      "region": "Europe",
+      "story_count": 99,
+      "instagram_id": "18347481994183019:breakingcycles.life"
+    },
+    "38": {
+      "name": "MFW2025 Vol II",
+      "original_index": 24,
+      "expedition_phase": "europe_part1",
+      "estimated_date": "2025-01-20",
+      "region": "Europe",
+      "story_count": 99,
+      "instagram_id": "17991384335769961:breakingcycles.life"
+    },
+    "39": {
+      "name": "France 🇫🇷",
+      "original_index": 23,
+      "expedition_phase": "europe_part1",
+      "estimated_date": "2025-01-23",
+      "region": "Europe",
+      "story_count": 22,
+      "instagram_id": "18038123462528317:breakingcycles.life"
+    },
+    "40": {
+      "name": "Spain 🇪🇸 I",
+      "original_index": 22,
+      "expedition_phase": "europe_part1",
+      "estimated_date": "2025-01-25",
+      "region": "Europe",
+      "story_count": 100,
+      "instagram_id": "18071829082750153:breakingcycles.life"
+    },
+    "41": {
+      "name": "Spain 🇪🇸 II",
+      "original_index": 21,
+      "expedition_phase": "europe_part1",
+      "estimated_date": "2025-02-07",
+      "region": "Europe",
+      "story_count": 18,
+      "instagram_id": "18035501075407752:breakingcycles.life"
+    },
+    "42": {
+      "name": "Italy 🇮🇹 III",
+      "original_index": 20,
+      "expedition_phase": "africa",
+      "estimated_date": "2025-01-17",
+      "region": "Europe",
+      "story_count": 18,
+      "instagram_id": "18048676087963901:breakingcycles.life"
+    },
+    "43": {
+      "name": "Morocco 🇲🇦 I",
+      "original_index": 19,
+      "expedition_phase": "africa",
+      "estimated_date": "2025-02-01",
+      "region": "Africa",
+      "story_count": 25,
+      "instagram_id": "18079492300619829:breakingcycles.life"
+    },
+    "44": {
+      "name": "Thoughts",
+      "original_index": 18,
+      "expedition_phase": "africa",
+      "estimated_date": "2024-08-08",
+      "region": "General",
+      "story_count": 100,
+      "instagram_id": "18030793766230793:breakingcycles.life"
+    },
+    "45": {
+      "name": "Morocco 🇲🇦 II",
+      "original_index": 17,
+      "expedition_phase": "africa",
+      "estimated_date": "2025-02-10",
+      "region": "Africa",
+      "story_count": 11,
+      "instagram_id": "18077175703725858:breakingcycles.life"
+    },
+    "46": {
+      "name": "Morocco 🇲🇦 III",
+      "original_index": 16,
+      "expedition_phase": "africa",
+      "estimated_date": "2025-02-18",
+      "region": "Africa",
+      "story_count": 9,
+      "instagram_id": "17908767675094414:breakingcycles.life"
+    },
+    "47": {
+      "name": "Morocco 🇲🇦 IV",
+      "original_index": 15,
+      "expedition_phase": "africa",
+      "estimated_date": "2025-03-03",
+      "region": "Africa",
+      "story_count": 9,
+      "instagram_id": "17949446570943474:breakingcycles.life"
+    },
+    "48": {
+      "name": "Souls pt. 2",
+      "original_index": 14,
+      "expedition_phase": "africa",
+      "estimated_date": "2024-12-30",
+      "region": "General",
+      "story_count": 9,
+      "instagram_id": "17975341163805031:breakingcycles.life"
+    },
+    "49": {
+      "name": "Morocco 🇲🇦 V",
+      "original_index": 13,
+      "expedition_phase": "africa",
+      "estimated_date": "2025-03-20",
+      "region": "Africa",
+      "story_count": 9,
+      "instagram_id": "17932045244897253:breakingcycles.life"
+    },
+    "50": {
+      "name": "Morocco 🇲🇦 VI",
+      "original_index": 12,
+      "expedition_phase": "africa",
+      "estimated_date": "2025-04-06",
+      "region": "Africa",
+      "story_count": 9,
+      "instagram_id": "17973374066841093:breakingcycles.life"
+    },
+    "51": {
+      "name": "Germany 🇩🇪 I",
+      "original_index": 11,
+      "expedition_phase": "europe_uk_scotland",
+      "estimated_date": "2025-04-24",
+      "region": "Europe",
+      "story_count": 9,
+      "instagram_id": "17935663073901419:breakingcycles.life"
+    },
+    "52": {
+      "name": "Germany 🇩🇪 II",
+      "original_index": 10,
+      "expedition_phase": "europe_uk_scotland",
+      "estimated_date": "2025-05-12",
+      "region": "Europe",
+      "story_count": 9,
+      "instagram_id": "18500727481005649:breakingcycles.life"
+    },
+    "53": {
+      "name": "England - Part 1 🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+      "original_index": 9,
+      "expedition_phase": "europe_uk_scotland",
+      "estimated_date": "2025-05-25",
+      "region": "UK",
+      "story_count": 9,
+      "instagram_id": "18017304146710500:breakingcycles.life",
+      "description": "England collection 1"
+    },
+    "54": {
+      "name": "Build 2.0",
+      "original_index": 8,
+      "expedition_phase": "europe_uk_scotland",
+      "estimated_date": "2025-04-28",
+      "region": "General",
+      "story_count": 9,
+      "instagram_id": "18057215815963683:breakingcycles.life"
+    },
+    "55": {
+      "name": "England - Part 2 🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+      "original_index": 7,
+      "expedition_phase": "europe_uk_scotland",
+      "estimated_date": "2025-06-08",
+      "region": "UK",
+      "story_count": 9,
+      "instagram_id": "18089901049624656:breakingcycles.life",
+      "description": "England collection 2"
+    },
+    "56": {
+      "name": "England - Part 3 🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+      "original_index": 6,
+      "expedition_phase": "europe_uk_scotland",
+      "estimated_date": "2025-06-21",
+      "region": "UK",
+      "story_count": 9,
+      "instagram_id": "18070381891972059:breakingcycles.life",
+      "description": "England collection 3"
+    },
+    "57": {
+      "name": "Podcast",
+      "original_index": 5,
+      "expedition_phase": "europe_uk_scotland",
+      "estimated_date": "2025-07-12",
+      "region": "General",
+      "story_count": 3,
+      "instagram_id": "18062166557266367:breakingcycles.life"
+    },
+    "58": {
+      "name": "Scotland - Part 1 🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+      "original_index": 4,
+      "expedition_phase": "europe_uk_scotland",
+      "estimated_date": "2025-07-12",
+      "region": "UK",
+      "story_count": 9,
+      "instagram_id": "18070600946491546:breakingcycles.life",
+      "description": "Scotland collection 1"
+    },
+    "59": {
+      "name": "Wales 🏴󠁧󠁢󠁷󠁬󠁳󠁿",
+      "original_index": 1,
+      "expedition_phase": "europe_uk_scotland",
+      "estimated_date": "2025-07-31",
+      "region": "UK",
+      "story_count": 31,
+      "instagram_id": "18011241530716717:breakingcycles.life",
+      "description": "Expedition finale in Wales"
+    },
+    "60": {
+      "name": "Scotland - Part 2 🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+      "original_index": 3,
+      "expedition_phase": "europe_uk_scotland",
+      "estimated_date": "2025-07-24",
+      "region": "UK",
+      "story_count": 9,
+      "instagram_id": "18077415214744071:breakingcycles.life",
+      "description": "Scotland collection 2"
+    },
+    "61": {
+      "name": "England - Part 4 🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+      "original_index": 2,
+      "expedition_phase": "europe_uk_scotland",
+      "estimated_date": "2025-07-09",
+      "region": "UK",
+      "story_count": 35,
+      "instagram_id": "18068925452490325:breakingcycles.life",
+      "description": "England collection 4 (main England collection)"
+    }
+  }
+}

@@ -1,0 +1,158 @@
+import { createClient } from '@supabase/supabase-js';
+
+// Load environment variables
+require('dotenv').config({ path: '.env.local' });
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+async function checkTableStructure() {
+  console.log('🔍 Checking current database table structure...\n');
+
+  try {
+    // Check if new columns exist by trying to query them
+    const { data: collections, error: collectionsError } = await supabase
+      .from('story_collections')
+      .select('id, name, collection_index, is_expedition_scope, expedition_exclude_reason')
+      .limit(1);
+
+    if (collectionsError) {
+      console.log('❌ story_collections: Missing new columns');
+      console.log('   Error:', collectionsError.message);
+      console.log('   🔧 Need to run: database/fresh-migration.sql');
+    } else {
+      console.log('✅ story_collections: Has new columns (collection_index, is_expedition_scope)');
+    }
+
+    const { data: stories, error: storiesError } = await supabase
+      .from('stories')
+      .select('id, collection_default_date, user_assigned_date, tag_source, date_confidence')
+      .limit(1);
+
+    if (storiesError) {
+      console.log('❌ stories: Missing new columns');
+      console.log('   Error:', storiesError.message);
+      console.log('   🔧 Need to run: database/fresh-migration.sql');
+    } else {
+      console.log('✅ stories: Has new columns (collection_default_date, user_assigned_date, etc.)');
+    }
+
+  } catch (error) {
+    console.error('💥 Error checking table structure:', error);
+  }
+}
+
+async function checkDataState() {
+  console.log('\n📊 Checking current data state...\n');
+
+  try {
+    // Check collections
+    const { data: collectionStats, error: collectionError } = await supabase
+      .from('story_collections')
+      .select('count()', { count: 'exact' });
+
+    if (collectionError) {
+      console.log('❌ Could not count collections:', collectionError.message);
+    } else {
+      console.log(`📋 Total collections: ${collectionStats[0]?.count || 0}`);
+    }
+
+    // Check if collections have collection_index
+    const { data: indexedCollections, error: indexError } = await supabase
+      .from('story_collections')
+      .select('collection_index')
+      .not('collection_index', 'is', null);
+
+    if (!indexError) {
+      console.log(`🔢 Collections with collection_index: ${indexedCollections?.length || 0}`);
+    }
+
+    // Check expedition scope distribution
+    const { data: expeditionStats, error: expeditionError } = await supabase
+      .from('story_collections')
+      .select('is_expedition_scope, count()', { count: 'exact' })
+      .groupBy('is_expedition_scope');
+
+    if (!expeditionError && expeditionStats) {
+      console.log('🗺️ Expedition scope distribution:');
+      for (const stat of expeditionStats) {
+        const scope = stat.is_expedition_scope ? 'Expedition' : 'Pre-expedition';
+        console.log(`   ${scope}: ${stat.count} collections`);
+      }
+    }
+
+    // Check stories
+    const { data: storyStats, error: storyError } = await supabase
+      .from('stories')
+      .select('count()', { count: 'exact' });
+
+    if (storyError) {
+      console.log('❌ Could not count stories:', storyError.message);
+    } else {
+      console.log(`📝 Total stories: ${storyStats[0]?.count || 0}`);
+    }
+
+  } catch (error) {
+    console.error('💥 Error checking data state:', error);
+  }
+}
+
+async function showRecommendations() {
+  console.log('\n🎯 Recommendations:\n');
+
+  try {
+    // Check if fresh migration is needed
+    const { data: collections, error } = await supabase
+      .from('story_collections')
+      .select('collection_index')
+      .limit(1);
+
+    if (error || !collections || collections.length === 0) {
+      console.log('1. 🔧 Run the fresh migration:');
+      console.log('   Run database/fresh-migration.sql in your Supabase SQL editor');
+      console.log('');
+      console.log('2. 📥 Import story data:');
+      console.log('   npx ts-node --project scripts/tsconfig.json scripts/fresh-import-stories.ts');
+      console.log('');
+      console.log('3. ✅ Verify with validation:');
+      console.log('   npx ts-node --project scripts/tsconfig.json scripts/validate-migration.ts');
+    } else {
+      const { data: storyCount } = await supabase
+        .from('stories')
+        .select('count()', { count: 'exact' });
+
+      if (!storyCount || storyCount[0]?.count === 0) {
+        console.log('1. 📥 Import story data:');
+        console.log('   npx ts-node --project scripts/tsconfig.json scripts/fresh-import-stories.ts');
+        console.log('');
+        console.log('2. ✅ Verify with validation:');
+        console.log('   npx ts-node --project scripts/tsconfig.json scripts/validate-migration.ts');
+      } else {
+        console.log('✅ Database appears to be set up correctly!');
+        console.log('');
+        console.log('🧪 Optional: Run validation to verify everything:');
+        console.log('   npx ts-node --project scripts/tsconfig.json scripts/validate-migration.ts');
+      }
+    }
+
+  } catch (error) {
+    console.error('💥 Error generating recommendations:', error);
+  }
+}
+
+async function main() {
+  console.log('🏥 Database Health Check\n');
+  console.log('='.repeat(50));
+  
+  await checkTableStructure();
+  await checkDataState();
+  await showRecommendations();
+  
+  console.log('\n' + '='.repeat(50));
+  console.log('🏁 Health check complete!');
+}
+
+if (require.main === module) {
+  main();
+}

@@ -154,7 +154,7 @@ export default function StoryDetail() {
 
         // Format the data to match our interface
         const formattedStory: Story = {
-          ...data,
+          ...(data as unknown as Story),
           collection: Array.isArray(data.story_collections) 
             ? data.story_collections[0] 
             : data.story_collections
@@ -171,7 +171,7 @@ export default function StoryDetail() {
             .eq('collection_id', formattedStory.collection_id)
             .order('story_index', { ascending: true });
           
-          setCollectionStories(collectionStoriesData || []);
+          setCollectionStories((collectionStoriesData as unknown as { id: string; story_index: number; }[]) || []);
         }
         
       } catch (error) {

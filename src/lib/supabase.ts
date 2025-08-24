@@ -4,11 +4,35 @@ import { TagWithMetadata } from '@/types';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-export const supabase = createSupabaseClient(supabaseUrl, supabaseKey);
+// Debug logging for production issues
+if (typeof window !== 'undefined') {
+  console.log('🔧 Supabase config debug:', {
+    urlLength: supabaseUrl?.length || 0,
+    keyLength: supabaseKey?.length || 0,
+    urlValid: supabaseUrl?.startsWith('https://') || false,
+    keyValid: supabaseKey?.length > 50 || false
+  });
+}
+
+// Create client with error handling
+let supabase: ReturnType<typeof createSupabaseClient>;
+try {
+  supabase = createSupabaseClient(supabaseUrl, supabaseKey);
+} catch (error) {
+  console.error('❌ Failed to create Supabase client:', error);
+  throw new Error('Supabase client creation failed - check environment variables');
+}
+
+export { supabase };
 
 // Helper function to create a new client instance for API routes
 export function createClient() {
-  return createSupabaseClient(supabaseUrl, supabaseKey);
+  try {
+    return createSupabaseClient(supabaseUrl, supabaseKey);
+  } catch (error) {
+    console.error('❌ Failed to create Supabase client in API route:', error);
+    throw new Error('Supabase client creation failed - check environment variables');
+  }
 }
 
 export type Database = {
