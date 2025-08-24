@@ -1,9 +1,15 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { TagWithMetadata } from '@/types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createSupabaseClient(supabaseUrl, supabaseKey);
+
+// Helper function to create a new client instance for API routes
+export function createClient() {
+  return createSupabaseClient(supabaseUrl, supabaseKey);
+}
 
 export type Database = {
   public: {
@@ -20,6 +26,14 @@ export type Database = {
           expedition_phase: string | null;
           created_at: string;
           updated_at: string;
+          // NEW FIELDS
+          collection_index: number;
+          is_expedition_scope: boolean;
+          expedition_exclude_reason: string | null;
+          gps_track_ids: number[] | null;
+          estimated_date_range_start: string | null;
+          estimated_date_range_end: string | null;
+          regional_tags: string[] | null;
         };
         Insert: {
           id?: string;
@@ -32,6 +46,14 @@ export type Database = {
           expedition_phase?: string | null;
           created_at?: string;
           updated_at?: string;
+          // NEW FIELDS
+          collection_index: number;
+          is_expedition_scope?: boolean;
+          expedition_exclude_reason?: string | null;
+          gps_track_ids?: number[] | null;
+          estimated_date_range_start?: string | null;
+          estimated_date_range_end?: string | null;
+          regional_tags?: string[] | null;
         };
         Update: {
           id?: string;
@@ -44,6 +66,14 @@ export type Database = {
           expedition_phase?: string | null;
           created_at?: string;
           updated_at?: string;
+          // NEW FIELDS
+          collection_index?: number;
+          is_expedition_scope?: boolean;
+          expedition_exclude_reason?: string | null;
+          gps_track_ids?: number[] | null;
+          estimated_date_range_start?: string | null;
+          estimated_date_range_end?: string | null;
+          regional_tags?: string[] | null;
         };
       };
       stories: {
@@ -60,10 +90,19 @@ export type Database = {
           location_confidence: 'high' | 'medium' | 'low' | 'estimated' | null;
           content_type: string[] | null;
           tags: string[] | null;
+          tags_unified: TagWithMetadata[] | null;
           estimated_date: string | null;
           time_added: string | null;
           created_at: string;
           updated_at: string;
+          // NEW FIELDS
+          estimated_date_range_start: string | null;
+          estimated_date_range_end: string | null;
+          user_assigned_date: string | null;
+          collection_default_date: string | null;
+          regional_tags: string[] | null;
+          tag_source: 'gps_estimated' | 'manual' | 'mixed' | 'excluded' | null;
+          date_confidence: 'gps_estimated' | 'collection_estimated' | 'manual' | 'high' | 'medium' | 'low' | null;
         };
         Insert: {
           id?: string;
@@ -78,10 +117,19 @@ export type Database = {
           location_confidence?: 'high' | 'medium' | 'low' | 'estimated' | null;
           content_type?: string[] | null;
           tags?: string[] | null;
+          tags_unified?: TagWithMetadata[] | null;
           estimated_date?: string | null;
           time_added?: string | null;
           created_at?: string;
           updated_at?: string;
+          // NEW FIELDS
+          estimated_date_range_start?: string | null;
+          estimated_date_range_end?: string | null;
+          user_assigned_date?: string | null;
+          collection_default_date?: string | null;
+          regional_tags?: string[] | null;
+          tag_source?: 'gps_estimated' | 'manual' | 'mixed' | 'excluded' | null;
+          date_confidence?: 'gps_estimated' | 'collection_estimated' | 'manual' | 'high' | 'medium' | 'low' | null;
         };
         Update: {
           id?: string;
@@ -96,10 +144,19 @@ export type Database = {
           location_confidence?: 'high' | 'medium' | 'low' | 'estimated' | null;
           content_type?: string[] | null;
           tags?: string[] | null;
+          tags_unified?: TagWithMetadata[] | null;
           estimated_date?: string | null;
           time_added?: string | null;
           created_at?: string;
           updated_at?: string;
+          // NEW FIELDS
+          estimated_date_range_start?: string | null;
+          estimated_date_range_end?: string | null;
+          user_assigned_date?: string | null;
+          collection_default_date?: string | null;
+          regional_tags?: string[] | null;
+          tag_source?: 'gps_estimated' | 'manual' | 'mixed' | 'excluded' | null;
+          date_confidence?: 'gps_estimated' | 'collection_estimated' | 'manual' | 'high' | 'medium' | 'low' | null;
         };
       };
       gps_waypoints: {
