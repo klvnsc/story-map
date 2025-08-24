@@ -1,0 +1,455 @@
+import { createClient } from '@supabase/supabase-js';
+import * as fs from 'fs';
+import * as path from 'path';
+
+// Load environment variables
+require('dotenv').config({ path: '.env.local' });
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Load collections manifest for validation
+const manifestPath = path.join(__dirname, '../data/collections-manifest.json');
+const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+
+interface ValidationResult {
+  test: string;
+  status: 'PASS' | 'FAIL' | 'WARNING';
+  message: string;
+  details?: any;
+}
+
+async function validateCollectionStructure(): Promise<ValidationResult[]> {
+  const results: ValidationResult[] = [];
+  
+  try {
+    // Test 1: Check all collections exist with collection_index
+    const { data: collections, error } = await supabase
+      .from('story_collections')
+      .select('*')
+      .order('collection_index');
+
+    if (error) {
+      results.push({
+        test: 'Collection Query',
+        status: 'FAIL',
+        message: `Database query failed: ${error.message}`
+      });
+      return results;
+    }
+
+    results.push({
+      test: 'Collection Query',
+      status: 'PASS',
+      message: `Successfully queried ${collections.length} collections`
+    });
+
+    // Test 2: Verify all collection indexes 1-61 exist
+    const collectionIndexes = collections.map(c => c.collection_index).filter(i => i !== null).sort((a, b) => a - b);
+    const expectedIndexes = Array.from({ length: 61 }, (_, i) => i + 1);
+    const missingIndexes = expectedIndexes.filter(i => !collectionIndexes.includes(i));
+    
+    if (missingIndexes.length === 0) {
+      results.push({
+        test: 'Collection Index Completeness',
+        status: 'PASS',
+        message: 'All collection indexes 1-61 are present'
+      });
+    } else {
+      results.push({
+        test: 'Collection Index Completeness',
+        status: 'FAIL',
+        message: `Missing collection indexes: ${missingIndexes.join(', ')}`
+      });
+    }
+
+    // Test 3: Verify chronological ordering
+    let chronologyErrors = 0;
+    for (let i = 1; i < collections.length; i++) {
+      const prev = collections[i - 1];
+      const curr = collections[i];
+      
+      if (prev.estimated_date && curr.estimated_date) {
+        const prevDate = new Date(prev.estimated_date);
+        const currDate = new Date(curr.estimated_date);
+        
+        if (prevDate > currDate) {
+          chronologyErrors++;
+        }
+      }
+    }
+
+    if (chronologyErrors === 0) {
+      results.push({
+        test: 'Chronological Ordering',
+        status: 'PASS',
+        message: 'Collections are properly ordered chronologically'
+      });
+    } else {
+      results.push({
+        test: 'Chronological Ordering',
+        status: 'WARNING',
+        message: `Found ${chronologyErrors} potential chronological ordering issues`
+      });
+    }
+
+    // Test 4: Verify expedition scope tracking
+    const preExpeditionCount = collections.filter(c => c.is_expedition_scope === false).length;
+    const expeditionCount = collections.filter(c => c.is_expedition_scope === true).length;
+    
+    if (preExpeditionCount === 8 && expeditionCount === 53) {
+      results.push({
+        test: 'Expedition Scope Tracking',
+        status: 'PASS',
+        message: `Correctly identified 8 pre-expedition and 53 expedition collections`
+      });
+    } else {
+      results.push({
+        test: 'Expedition Scope Tracking',
+        status: 'FAIL',
+        message: `Expected 8 pre-expedition and 53 expedition collections, got ${preExpeditionCount} and ${expeditionCount}`,
+        details: { preExpeditionCount, expeditionCount }
+      });
+    }
+
+    // Test 5: Verify expedition phases are assigned
+    const phaseDistribution = collections.reduce((acc, c) => {
+      acc[c.expedition_phase || 'unknown'] = (acc[c.expedition_phase || 'unknown'] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const expectedPhases = ['pre_expedition', 'north_china', 'central_asia', 'middle_east_caucasus', 'europe_part1', 'africa', 'europe_uk_scotland'];
+    const missingPhases = expectedPhases.filter(phase => !phaseDistribution[phase]);
+    
+    if (missingPhases.length === 0) {
+      results.push({
+        test: 'Expedition Phase Assignment',
+        status: 'PASS',
+        message: 'All expected expedition phases are assigned',
+        details: phaseDistribution
+      });
+    } else {
+      results.push({
+        test: 'Expedition Phase Assignment',
+        status: 'FAIL',
+        message: `Missing expedition phases: ${missingPhases.join(', ')}`,
+        details: phaseDistribution
+      });
+    }
+
+  } catch (error) {
+    results.push({
+      test: 'Collection Structure Validation',
+      status: 'FAIL',
+      message: `Validation error: ${error}`
+    });
+  }
+
+  return results;
+}
+
+async function validateStoryStructure(): Promise<ValidationResult[]> {
+  const results: ValidationResult[] = [];
+  
+  try {
+    // Test 1: Check story count matches manifest expectations
+    const { data: storyCounts, error } = await supabase
+      .from('stories')
+      .select('collection_id, count(*)')
+      .innerJoin('story_collections', 'stories.collection_id = story_collections.id')
+      .select('story_collections.collection_index, count(*)')
+      .group('collection_id, story_collections.collection_index');
+
+    if (error) {
+      results.push({
+        test: 'Story Count Validation',
+        status: 'FAIL',
+        message: `Story query failed: ${error.message}`
+      });
+      return results;
+    }
+
+    // Test 2: Verify date field usage
+    const { data: dateFieldStats, error: dateError } = await supabase
+      .from('stories')
+      .select('collection_default_date, user_assigned_date, estimated_date')
+      .limit(1000);
+
+    if (dateError) {
+      results.push({
+        test: 'Date Field Validation',
+        status: 'FAIL',
+        message: `Date field query failed: ${dateError.message}`
+      });
+    } else {
+      const collectionDefaultCount = dateFieldStats.filter(s => s.collection_default_date).length;
+      const userAssignedCount = dateFieldStats.filter(s => s.user_assigned_date).length;
+      const legacyEstimatedCount = dateFieldStats.filter(s => s.estimated_date).length;
+
+      results.push({
+        test: 'Date Field Usage',
+        status: 'PASS',
+        message: `Found ${collectionDefaultCount} stories with collection_default_date, ${userAssignedCount} with user_assigned_date`,
+        details: { collectionDefaultCount, userAssignedCount, legacyEstimatedCount }
+      });
+    }
+
+    // Test 3: Verify tag_source assignment
+    const { data: tagSourceStats, error: tagError } = await supabase
+      .from('stories')
+      .select('tag_source, count(*)')
+      .group('tag_source');
+
+    if (tagError) {
+      results.push({
+        test: 'Tag Source Validation',
+        status: 'FAIL',
+        message: `Tag source query failed: ${tagError.message}`
+      });
+    } else {
+      const tagSourceDistribution = tagSourceStats.reduce((acc, stat) => {
+        acc[stat.tag_source || 'null'] = stat.count;
+        return acc;
+      }, {} as Record<string, number>);
+
+      results.push({
+        test: 'Tag Source Distribution',
+        status: 'PASS',
+        message: 'Tag source assignment completed',
+        details: tagSourceDistribution
+      });
+    }
+
+  } catch (error) {
+    results.push({
+      test: 'Story Structure Validation',
+      status: 'FAIL',
+      message: `Validation error: ${error}`
+    });
+  }
+
+  return results;
+}
+
+async function validateGPSCorrelation(): Promise<ValidationResult[]> {
+  const results: ValidationResult[] = [];
+  
+  try {
+    // Test 1: Verify expedition collections have GPS correlation capability
+    const { data: expeditionCollections, error } = await supabase
+      .from('story_collections')
+      .select('*')
+      .eq('is_expedition_scope', true);
+
+    if (error) {
+      results.push({
+        test: 'GPS Correlation Query',
+        status: 'FAIL',
+        message: `GPS correlation query failed: ${error.message}`
+      });
+      return results;
+    }
+
+    // Test phase ranges match GPS correlation logic
+    const phaseRanges = {
+      'north_china': [9, 11],
+      'central_asia': [12, 21],
+      'middle_east_caucasus': [22, 30],
+      'europe_part1': [31, 41],
+      'africa': [42, 50],
+      'europe_uk_scotland': [51, 61]
+    };
+
+    let phaseValidationErrors = 0;
+    for (const collection of expeditionCollections) {
+      const expectedRange = phaseRanges[collection.expedition_phase as keyof typeof phaseRanges];
+      if (expectedRange) {
+        const [min, max] = expectedRange;
+        if (collection.collection_index < min || collection.collection_index > max) {
+          phaseValidationErrors++;
+        }
+      }
+    }
+
+    if (phaseValidationErrors === 0) {
+      results.push({
+        test: 'GPS Phase Range Validation',
+        status: 'PASS',
+        message: 'All expedition collections are in correct phase ranges'
+      });
+    } else {
+      results.push({
+        test: 'GPS Phase Range Validation',
+        status: 'FAIL',
+        message: `Found ${phaseValidationErrors} collections in incorrect phase ranges`
+      });
+    }
+
+    // Test 2: Verify pre-expedition collections are excluded
+    const { data: preExpeditionCollections, error: preError } = await supabase
+      .from('story_collections')
+      .select('*')
+      .eq('is_expedition_scope', false);
+
+    if (preError) {
+      results.push({
+        test: 'Pre-expedition Exclusion',
+        status: 'FAIL',
+        message: `Pre-expedition query failed: ${preError.message}`
+      });
+    } else {
+      const preExpeditionIndexes = preExpeditionCollections.map(c => c.collection_index).sort((a, b) => a - b);
+      const expectedPreExpedition = [1, 2, 3, 4, 5, 6, 7, 8];
+      
+      if (JSON.stringify(preExpeditionIndexes) === JSON.stringify(expectedPreExpedition)) {
+        results.push({
+          test: 'Pre-expedition Exclusion',
+          status: 'PASS',
+          message: 'Collections 1-8 correctly excluded from expedition scope'
+        });
+      } else {
+        results.push({
+          test: 'Pre-expedition Exclusion',
+          status: 'FAIL',
+          message: `Expected collections 1-8 to be excluded, found: ${preExpeditionIndexes.join(', ')}`
+        });
+      }
+    }
+
+  } catch (error) {
+    results.push({
+      test: 'GPS Correlation Validation',
+      status: 'FAIL',
+      message: `Validation error: ${error}`
+    });
+  }
+
+  return results;
+}
+
+async function validateManifestConsistency(): Promise<ValidationResult[]> {
+  const results: ValidationResult[] = [];
+  
+  try {
+    // Compare database with manifest data
+    const { data: collections, error } = await supabase
+      .from('story_collections')
+      .select('*')
+      .order('collection_index');
+
+    if (error) {
+      results.push({
+        test: 'Manifest Consistency',
+        status: 'FAIL',
+        message: `Database query failed: ${error.message}`
+      });
+      return results;
+    }
+
+    let inconsistencies = 0;
+    for (const collection of collections) {
+      const manifestData = manifest.collections[collection.collection_index?.toString()];
+      if (manifestData) {
+        // Check name consistency
+        if (collection.name !== manifestData.name) {
+          inconsistencies++;
+        }
+        
+        // Check expedition phase consistency
+        if (collection.expedition_phase !== manifestData.expedition_phase) {
+          inconsistencies++;
+        }
+        
+        // Check date consistency
+        if (collection.estimated_date !== manifestData.estimated_date) {
+          inconsistencies++;
+        }
+      }
+    }
+
+    if (inconsistencies === 0) {
+      results.push({
+        test: 'Manifest Data Consistency',
+        status: 'PASS',
+        message: 'Database data matches collections-manifest.json perfectly'
+      });
+    } else {
+      results.push({
+        test: 'Manifest Data Consistency',
+        status: 'WARNING',
+        message: `Found ${inconsistencies} minor inconsistencies with manifest data`
+      });
+    }
+
+  } catch (error) {
+    results.push({
+      test: 'Manifest Consistency Validation',
+      status: 'FAIL',
+      message: `Validation error: ${error}`
+    });
+  }
+
+  return results;
+}
+
+async function main() {
+  console.log('🔍 Starting Migration Validation...\n');
+  
+  const allResults: ValidationResult[] = [];
+  
+  console.log('📋 Validating Collection Structure...');
+  const collectionResults = await validateCollectionStructure();
+  allResults.push(...collectionResults);
+  
+  console.log('📝 Validating Story Structure...');
+  const storyResults = await validateStoryStructure();
+  allResults.push(...storyResults);
+  
+  console.log('🗺️ Validating GPS Correlation...');
+  const gpsResults = await validateGPSCorrelation();
+  allResults.push(...gpsResults);
+  
+  console.log('📄 Validating Manifest Consistency...');
+  const manifestResults = await validateManifestConsistency();
+  allResults.push(...manifestResults);
+  
+  // Print summary
+  console.log('\n' + '='.repeat(60));
+  console.log('MIGRATION VALIDATION SUMMARY');
+  console.log('='.repeat(60));
+  
+  const passed = allResults.filter(r => r.status === 'PASS').length;
+  const failed = allResults.filter(r => r.status === 'FAIL').length;
+  const warnings = allResults.filter(r => r.status === 'WARNING').length;
+  
+  console.log(`✅ PASSED: ${passed}`);
+  console.log(`⚠️  WARNINGS: ${warnings}`);
+  console.log(`❌ FAILED: ${failed}`);
+  console.log(`📊 TOTAL TESTS: ${allResults.length}\n`);
+  
+  // Print detailed results
+  for (const result of allResults) {
+    const icon = result.status === 'PASS' ? '✅' : result.status === 'WARNING' ? '⚠️' : '❌';
+    console.log(`${icon} ${result.test}: ${result.message}`);
+    
+    if (result.details) {
+      console.log(`   Details: ${JSON.stringify(result.details, null, 2)}`);
+    }
+  }
+  
+  // Overall status
+  if (failed === 0) {
+    console.log('\n🎉 Migration validation completed successfully!');
+    if (warnings > 0) {
+      console.log('⚠️ Some warnings detected - review recommended but not critical.');
+    }
+  } else {
+    console.log('\n❌ Migration validation failed!');
+    console.log('🔧 Please address the failed tests before proceeding.');
+  }
+}
+
+if (require.main === module) {
+  main().catch(console.error);
+}

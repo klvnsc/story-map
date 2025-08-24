@@ -25,60 +25,47 @@ interface CSVStory {
   time_added: string;
 }
 
-// Expedition phase mapping
-const EXPEDITION_PHASES = {
-  'north_china': { start: 1, end: 15, date: '2024-07-01' },
-  'central_asia': { start: 16, end: 35, date: '2024-08-31' },
-  'middle_east': { start: 36, end: 45, date: '2024-10-17' },
-  'africa': { start: 46, end: 55, date: '2025-01-06' },
-  'europe': { start: 56, end: 60, date: '2025-03-14' },
-  'scotland': { start: 61, end: 61, date: '2025-06-24' }
-};
+// Load collections manifest as source of truth
+const manifestPath = path.join(__dirname, '../data/collections-manifest.json');
+const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 
-function getExpeditionPhase(collectionIndex: number): string {
-  for (const [phase, range] of Object.entries(EXPEDITION_PHASES)) {
-    if (collectionIndex >= range.start && collectionIndex <= range.end) {
-      return phase;
-    }
-  }
-  return 'unknown';
-}
+// Extract phase definitions from manifest
+const EXPEDITION_PHASES = manifest.expedition_phases;
 
-function getPhaseDate(phase: string): string {
-  const phaseInfo = Object.entries(EXPEDITION_PHASES).find(([p]) => p === phase);
-  return phaseInfo ? phaseInfo[1].date : '2024-07-01';
-}
+// Removed old functions - now using manifest directly
 
 async function importCollections() {
-  console.log('Importing collections from ig-data.csv...');
+  console.log('Importing collections from collections-manifest.json...');
   
-  const csvPath = path.join(process.cwd(), './data-story-collection/ig-data.csv');
-  const csvContent = fs.readFileSync(csvPath, 'utf-8');
-  const collections = parse(csvContent, { 
-    columns: true, 
-    skip_empty_lines: true 
-  }) as CSVCollection[];
+  // Use manifest data instead of CSV for accurate collection metadata
+  const collections = manifest.collections;
 
-  for (let i = 0; i < collections.length; i++) {
-    const collection = collections[i];
-    const collectionIndex = i + 1;
-    const expeditionPhase = getExpeditionPhase(collectionIndex);
-    const estimatedDate = getPhaseDate(expeditionPhase);
+  for (const [collectionIndex, collectionData] of Object.entries(collections)) {
+    const index = parseInt(collectionIndex);
+    const data = collectionData as any;
+    
+    // Determine expedition scope
+    const isExpeditionScope = index >= 9; // Collections 1-8 are pre-expedition
+    const expeditionExcludeReason = index <= 8 ? 'pre_expedition_content' : null;
     
     const { error } = await supabase
       .from('story_collections')
       .insert({
-        highlight_id: collection['Highlight ID'],
-        name: collection['Collection Name'],
-        story_count: parseInt(collection['Story Count'].replace(' stories', '')),
-        expedition_phase: expeditionPhase,
-        estimated_date: estimatedDate
+        highlight_id: data.instagram_id,
+        name: data.name,
+        story_count: data.story_count,
+        collection_index: index,
+        expedition_phase: data.expedition_phase,
+        estimated_date: data.estimated_date,
+        is_expedition_scope: isExpeditionScope,
+        expedition_exclude_reason: expeditionExcludeReason,
+        region: data.region
       });
 
     if (error) {
-      console.error(`Error inserting collection ${collection['Collection Name']}:`, error);
+      console.error(`Error inserting collection ${data.name}:`, error);
     } else {
-      console.log(`✅ Imported collection: ${collection['Collection Name']} (${expeditionPhase})`);
+      console.log(`✅ Imported collection ${index}: ${data.name} (${data.expedition_phase})`);
     }
   }
 }
@@ -86,28 +73,35 @@ async function importCollections() {
 async function importStories() {
   console.log('Importing individual stories...');
   
-  // Get all collections from database
+  // Get all collections from database ordered by collection_index
   const { data: collections, error: collectionsError } = await supabase
     .from('story_collections')
     .select('*')
-    .order('created_at');
+    .order('collection_index');
 
   if (collectionsError) {
     console.error('Error fetching collections:', collectionsError);
     return;
   }
 
-  for (let i = 0; i < collections.length; i++) {
-    const collection = collections[i];
-    const csvFileName = `${i + 1}.csv`;
-    const csvPath = path.join(process.cwd(), `./data-story-collection/${csvFileName}`);
-    
-    if (!fs.existsSync(csvPath)) {
-      console.log(`⚠️ CSV file not found: ${csvFileName}`);
+  for (const collection of collections) {
+    if (!collection.collection_index) {
+      console.log(`⚠️ Collection ${collection.name} missing collection_index, skipping`);
       continue;
     }
 
-    console.log(`Processing ${csvFileName} for collection: ${collection.name}`);
+    // Map collection_index to old CSV file naming (using original_index from manifest)
+    const manifestData = manifest.collections[collection.collection_index.toString()];
+    const originalIndex = manifestData?.original_index || collection.collection_index;
+    const csvFileName = `${originalIndex}.csv`;
+    const csvPath = path.join(process.cwd(), `./data-story-collection/${csvFileName}`);
+    
+    if (!fs.existsSync(csvPath)) {
+      console.log(`⚠️ CSV file not found: ${csvFileName} for collection ${collection.collection_index}`);
+      continue;
+    }
+
+    console.log(`Processing ${csvFileName} (collection ${collection.collection_index}): ${collection.name}`);
     
     const csvContent = fs.readFileSync(csvPath, 'utf-8');
     const stories = parse(csvContent, { 
@@ -125,7 +119,8 @@ async function importStories() {
           cdn_url: story.cdn_url,
           duration: story.duration ? parseInt(story.duration) : null,
           time_added: story.time_added,
-          estimated_date: collection.estimated_date // Same date as collection
+          collection_default_date: collection.estimated_date, // Use new field name
+          tag_source: collection.is_expedition_scope ? 'manual' : 'excluded'
         });
 
       if (error) {
@@ -133,7 +128,7 @@ async function importStories() {
       }
     }
     
-    console.log(`✅ Imported ${stories.length} stories for collection: ${collection.name}`);
+    console.log(`✅ Imported ${stories.length} stories for collection ${collection.collection_index}: ${collection.name}`);
   }
 }
 
