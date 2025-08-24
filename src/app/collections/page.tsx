@@ -13,6 +13,7 @@ interface Collection {
   region?: string;
   expedition_phase?: string;
   collection_start_date?: string;
+  is_expedition_scope?: boolean;
 }
 
 export default function Collections() {
