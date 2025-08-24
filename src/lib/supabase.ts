@@ -28,6 +28,7 @@ export type Database = {
           updated_at: string;
           // NEW FIELDS
           collection_index: number;
+          collection_start_date: string | null;
           is_expedition_scope: boolean;
           expedition_exclude_reason: string | null;
           gps_track_ids: number[] | null;
@@ -48,6 +49,7 @@ export type Database = {
           updated_at?: string;
           // NEW FIELDS
           collection_index: number;
+          collection_start_date?: string | null;
           is_expedition_scope?: boolean;
           expedition_exclude_reason?: string | null;
           gps_track_ids?: number[] | null;
@@ -68,6 +70,7 @@ export type Database = {
           updated_at?: string;
           // NEW FIELDS
           collection_index?: number;
+          collection_start_date?: string | null;
           is_expedition_scope?: boolean;
           expedition_exclude_reason?: string | null;
           gps_track_ids?: number[] | null;
