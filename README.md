@@ -107,6 +107,26 @@ npm run lint         # Run ESLint
 npm run import-data  # Import CSV data to Supabase
 ```
 
+## CDN URL Renewal
+
+When Instagram story URLs expire, use the CDN renewal script:
+
+```bash
+# Single collection
+npx ts-node --project scripts/tsconfig.json scripts/renew-cdn-urls.ts collection 1
+
+# Multiple collections  
+npx ts-node --project scripts/tsconfig.json scripts/renew-cdn-urls.ts collections 1,5,10
+
+# All collections
+npx ts-node --project scripts/tsconfig.json scripts/renew-cdn-urls.ts all
+
+# Dry run (preview changes)
+npx ts-node --project scripts/tsconfig.json scripts/renew-cdn-urls.ts collection 1 --dry-run
+```
+
+**Note**: Don't use `npm run renew-cdn-urls` due to argument passing issues.
+
 ## Features
 
 - ✅ Simple authentication (admin/123)

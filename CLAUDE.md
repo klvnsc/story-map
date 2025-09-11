@@ -32,10 +32,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Collections Manifest (Master Metadata)
 - **Location**: `/data/collections-manifest.json` (authoritative collection metadata)
-- **Version**: 1.1.0 (created 2025-08-15)
-- **Content**: Complete expedition structure with 7 phases, collection metadata, and number mapping
-- **Expedition Phases**: pre_expedition (1-8), north_china (9-11), central_asia (12-21), middle_east_caucasus (22-30), europe_part1 (31-41), africa (42-50), europe_uk_scotland (51-61)
+- **Version**: 1.2.0 (updated 2025-09-10 - added Arctic Finale phase and collections 62-64)
+- **Content**: Complete expedition structure with 8 phases, collection metadata, and number mapping
+- **Expedition Phases**: pre_expedition (1-8), north_china (9-11), central_asia (12-21), middle_east_caucasus (22-30), europe_part1 (31-41), africa (42-50), europe_uk_scotland (51-61), arctic_finale (62-64)
 - **Collection Mapping**: old_to_new and new_to_old number mapping system for chronological ordering
+
+#### Version History:
+- **v1.0.0** (2025-08-15): Initial 7-phase structure with 61 collections
+- **v1.1.0** (2025-08-15): Corrected dates and expedition phases
+- **v1.2.0** (2025-09-10): Added Arctic Finale phase (collections 62-64), extended to 8 phases total
 
 ### Key Constraints
 - Stories missing individual timestamps and location data
@@ -52,8 +57,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Deployment**: Local development only (rapid prototyping)
 
 ### Database Schema (3 Tables)
-- **story_collections**: 61 highlight collections with metadata
-- **stories**: 4,438 individual stories with collection references  
+- **story_collections**: 64 highlight collections with metadata (updated for Arctic Finale)
+- **stories**: 4,438+ individual stories with collection references  
 - **gps_waypoints**: 9,731 GPS points from 29 expedition tracks
 
 ## Date Priority Logic for Stories
