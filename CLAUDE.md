@@ -319,6 +319,30 @@ Based on collections-manifest.json data:
 - Date estimation based on GPS expedition phases and collection order
 - Manual date override capability for individual stories
 
+### ⚠️ CRITICAL: Dual Expedition Phase Systems Synchronization
+**Architecture Issue**: The codebase maintains TWO parallel expedition phase mapping systems that must stay synchronized:
+
+1. **GPS Correlation System** (`/src/lib/gps-correlation.ts`):
+   - Defines collection ranges: `collection_range: [51, 62]`
+   - Used for: Story location tagging, regional tag suggestions
+   - Format: Object with `date_range: { start: "2025-04-24", end: "2025-08-21" }`
+
+2. **Utils Date System** (`/src/lib/utils.ts`):
+   - Defines date ranges: `"date_range": "2025-04-24_2025-08-21"`
+   - Used for: Map color coding via `getExpeditionPhaseForDate()`
+   - Format: String with underscore separator `"startDate_endDate"`
+
+**MUST SYNCHRONIZE BOTH when updating expedition phases:**
+- Collection ranges must match between both systems
+- Date ranges must be consistent (convert formats appropriately)
+- Missing synchronization causes grey stories on map (unknown phase)
+
+**Example Fix Applied (Sep 2025):**
+- GPS Correlation: `collection_range: [51, 62]`, `end: "2025-08-21"`
+- Utils System: `"collections": [51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62]`, `"date_range": "2025-04-24_2025-08-21"`
+
+**Root Cause**: MapView uses `getStoryExpeditionPhase()` which calls `getExpeditionPhaseForDate()` for stories with manual dates, bypassing collection-level phase assignment. If date falls outside utils system ranges, returns 'unknown' → grey color.
+
 ### Performance Considerations
 - Implement pagination for 4,438 stories (50-100 per page)
 - Use Next.js Image optimization for story thumbnails

@@ -190,9 +190,9 @@ const expeditionPhasesData: Record<string, {
   },
   "europe_uk_scotland": {
     "name": "Europe Part 2 & UK/Scotland - Expedition End",
-    "date_range": "2025-04-24_2025-07-31",
+    "date_range": "2025-04-24_2025-08-21",
     "description": "Germany → England → Wales → Scotland",
-    "collections": [51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61],
+    "collections": [51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62],
     "story_count": 120
   },
   "arctic_finale": {

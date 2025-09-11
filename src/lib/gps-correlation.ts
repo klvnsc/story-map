@@ -76,9 +76,9 @@ export const EXPEDITION_COLLECTION_MAPPING = {
     regions: ["Morocco", "Africa"]
   },
   europe_uk_scotland: { 
-    collection_range: [51, 61], 
+    collection_range: [51, 62], 
     tracks: [27, 28, 29],
-    date_range: { start: "2025-04-24", end: "2025-07-31" },
+    date_range: { start: "2025-04-24", end: "2025-08-21" },
     regions: ["Germany", "England", "Wales", "Scotland", "UK", "Britain"]
   },
   arctic_finale: {
