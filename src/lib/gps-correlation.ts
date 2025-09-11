@@ -80,6 +80,12 @@ export const EXPEDITION_COLLECTION_MAPPING = {
     tracks: [27, 28, 29],
     date_range: { start: "2025-04-24", end: "2025-07-31" },
     regions: ["Germany", "England", "Wales", "Scotland", "UK", "Britain"]
+  },
+  arctic_finale: {
+    collection_range: [63, 64],
+    tracks: [28, 29], // Scotland finale tracks (closest temporal match)
+    date_range: { start: "2025-08-22", end: "2025-11-30" },
+    regions: ["UK", "Belgium", "Denmark", "Norway"]
   }
 } as const
 
@@ -129,7 +135,7 @@ export function getExpeditionPhaseByCollection(collectionIndex: number): keyof t
  * Collections 1-8 are pre-expedition content (excluded)
  */
 export function isExpeditionCollection(collectionIndex: number): boolean {
-  return collectionIndex >= 9 && collectionIndex <= 61
+  return collectionIndex >= 9 && collectionIndex <= 64
 }
 
 /**

@@ -1,13 +1,15 @@
 {
   "metadata": {
-    "version": "1.1.0",
+    "version": "1.2.0",
     "created": "2025-08-15",
-    "description": "Complete collection metadata with corrected 7-phase expedition structure and accurate dates",
-    "total_collections": 61,
+    "description": "Complete collection metadata with 8-phase expedition structure including Arctic Finale - 64 collections total",
+    "total_collections": 64,
+    "total_phases": 8,
     "pre_expedition_collections": "1-8",
     "north_china_collections": "9-10", 
-    "expedition_collections": "11-61",
-    "last_updated": "2025-08-15T12:00:00Z"
+    "expedition_collections": "11-64",
+    "arctic_finale_collections": "63-64",
+    "last_updated": "2025-09-10T17:00:00Z"
   },
   "expedition_phases": {
     "pre_expedition": {
@@ -53,11 +55,18 @@
       "story_count": 262
     },
     "europe_uk_scotland": {
-      "name": "Europe Part 2 & UK/Scotland - Expedition End",
-      "date_range": "2025-04-24_2025-10-30",
-      "description": "Germany → England → Wales → Scotland - Expedition finale", 
-      "collections": [51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61],
-      "story_count": 120
+      "name": "Europe Part 2 & UK/Scotland",
+      "date_range": "2025-04-24_2025-08-18",
+      "description": "Germany → England → Wales → Scotland → England Part 5", 
+      "collections": [51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62],
+      "story_count": 170
+    },
+    "arctic_finale": {
+      "name": "Arctic UK - Expedition Finale",
+      "date_range": "2025-08-22_2025-09-01",
+      "description": "Final Arctic adventures in the UK - The ultimate expedition conclusion",
+      "collections": [63, 64],
+      "story_count": 338
     }
   },
   "collection_mapping": {
@@ -636,6 +645,36 @@
       "story_count": 35,
       "instagram_id": "18068925452490325:breakingcycles.life",
       "description": "England collection 4 (main England collection)"
+    },
+    "62": {
+      "name": "England - Part 5 🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+      "original_index": 62,
+      "expedition_phase": "europe_uk_scotland",
+      "estimated_date": "2025-08-18",
+      "region": "UK",
+      "story_count": 50,
+      "instagram_id": "18153039670391437:breakingcycles.life",
+      "description": "England collection 5 - Extended UK expedition"
+    },
+    "63": {
+      "name": "UK > ARCTIC I",
+      "original_index": 63,
+      "expedition_phase": "arctic_finale",
+      "estimated_date": "2025-08-22",
+      "region": "UK",
+      "story_count": 100,
+      "instagram_id": "17967854072790865:breakingcycles.life",
+      "description": "Arctic UK expedition - Part 1"
+    },
+    "64": {
+      "name": "UK > ARCTIC II",
+      "original_index": 64,
+      "expedition_phase": "arctic_finale",
+      "estimated_date": "2025-09-01",
+      "region": "UK",
+      "story_count": 138,
+      "instagram_id": "18136174984433471:breakingcycles.life",
+      "description": "Arctic UK expedition - Part 2 (Expedition finale)"
     }
   }
 }

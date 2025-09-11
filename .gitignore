@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# operational files - CDN renewal backups and logs
+*.backup.*
+/logs/
+/database/*.sql
+/scripts/direct-extract.ts
+/scripts/extract-new-collections.ts
+/scripts/generate-*.ts
+
+# data files - CSV and HTML collection files
+/data-story-collection/*.csv
+/data-story-collection/*.html

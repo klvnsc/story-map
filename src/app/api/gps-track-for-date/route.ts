@@ -84,6 +84,14 @@ const EXPEDITION_COLLECTION_MAPPING = {
     tracks: [27, 28, 29],
     date_range: { start: "2025-04-24", end: "2025-07-31" },
     regions: ["Germany", "England", "Wales", "Scotland", "UK", "Britain"]
+  },
+  
+  // Arctic Finale (Collections 63-64)
+  arctic_finale: {
+    collection_range: [63, 64],
+    tracks: [28, 29], // Scotland finale tracks (closest temporal match)
+    date_range: { start: "2025-08-22", end: "2025-11-30" },
+    regions: ["UK", "Belgium", "Denmark", "Norway"]
   }
 }
 
