@@ -172,6 +172,7 @@ export default function MapView({ selectedPhase }: MapViewProps) {
       'europe_part1': '#3B82F6',             // Blue
       'africa': '#EF4444',                   // Red
       'europe_uk_scotland': '#8B5CF6',       // Purple
+      'arctic_finale': '#06B6D4',            // Cyan
       'post_expedition': '#374151',          // Dark Gray
       'unknown': '#6B7280',                  // Gray    
     };
@@ -356,6 +357,10 @@ export default function MapView({ selectedPhase }: MapViewProps) {
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#8B5CF6' }} />
             <span>Europe & UK/Scotland</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#06B6D4' }} />
+            <span>Arctic Finale</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#6B7280' }} />
