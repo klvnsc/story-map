@@ -40,7 +40,7 @@ function LocationItem({ location }: LocationItemProps) {
           <div className="mt-1 flex items-center space-x-4">
             <div className="flex items-center text-xs text-gray-500">
               <span className="mr-1">🚶</span>
-              <span>9 min • 0.47 mi</span>
+              <span>{location.walkingTime || '~15 min'}</span>
             </div>
             <button
               onClick={handleDirectionsClick}

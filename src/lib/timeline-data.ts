@@ -6,6 +6,7 @@ export interface Location {
   sequence: number;
   dayNumber: number;
   directionsUrl?: string;
+  walkingTime?: string;
 }
 
 export interface TripDay {

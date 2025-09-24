@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { generateImprovedDirectionsUrl, estimateWalkingTime } from '@/lib/vietnam-locations';
 
 export interface Location {
   name: string;
   sequence: number;
   dayNumber: number;
   directionsUrl?: string;
+  walkingTime?: string;
 }
 
 export interface TripDay {
@@ -22,17 +24,7 @@ export interface Timeline {
   totalLocations: number;
 }
 
-function generateDirectionsUrl(origin: string, destination: string): string {
-  const baseUrl = 'https://maps.google.com/directions/';
-  const params = new URLSearchParams({
-    api: '1',
-    origin: origin,
-    destination: destination,
-    travelmode: 'walking'
-  });
-
-  return `${baseUrl}?${params.toString()}`;
-}
+// Use the improved directions URL generation from vietnam-locations.ts
 
 function addDirectionsUrls(days: TripDay[]): void {
   let previousLocation: Location | null = null;
@@ -40,7 +32,16 @@ function addDirectionsUrls(days: TripDay[]): void {
   for (const day of days) {
     for (const location of day.locations) {
       if (previousLocation) {
-        location.directionsUrl = generateDirectionsUrl(previousLocation.name, location.name);
+        // Use improved directions URL with place IDs and detailed addresses
+        location.directionsUrl = generateImprovedDirectionsUrl(
+          previousLocation.name,
+          location.name,
+          true, // Use detailed format with place IDs
+          'walking'
+        );
+
+        // Add walking time estimate
+        location.walkingTime = estimateWalkingTime(previousLocation.name, location.name);
       }
       previousLocation = location;
     }
