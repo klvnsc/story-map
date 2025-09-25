@@ -55,7 +55,8 @@ export async function searchPlace(options: PlaceSearchOptions): Promise<GooglePl
 
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
   if (!apiKey) {
-    throw new Error('Google Places API key not configured');
+    console.warn('Google Places API key not configured, skipping API search');
+    return null;
   }
 
   try {
