@@ -14,7 +14,7 @@ interface DaySectionProps {
 }
 
 interface LocationItemProps {
-  location: Location;
+  location: Location & { travelMode?: 'walking' | 'driving' };
 }
 
 function LocationItem({ location }: LocationItemProps) {
@@ -39,7 +39,7 @@ function LocationItem({ location }: LocationItemProps) {
         {location.directionsUrl && (
           <div className="mt-1 flex items-center space-x-4">
             <div className="flex items-center text-xs text-gray-500">
-              <span className="mr-1">🚶</span>
+              <span className="mr-1">{location.travelMode === 'driving' ? '🚗' : '🚶'}</span>
               <span>{location.walkingTime || '~15 min'}</span>
             </div>
             <button

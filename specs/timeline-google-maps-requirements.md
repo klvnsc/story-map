@@ -3,10 +3,16 @@
 ## Overview
 Interactive timeline page that displays Sharon's Vietnam trip itinerary with Google Maps directions and export functionality.
 
+## Travel Context
+- **Location**: Ho Chi Minh City, Vietnam
+- **Area**: Primarily District 1 and surrounding areas
+- **Transport Mode**: Walking directions between locations
+- **Duration**: 6-day Vietnam itinerary (Sept 26 - Oct 1)
+
 ## Data Source
 - **File**: `/data/sharon-trip.txt`
 - **Format**: Plain text with day headers and location lists
-- **Content**: 6-day Vietnam itinerary (Sept 26 - Oct 1)
+- **Content**: 6-day Vietnam itinerary with District 1 as central location
 
 ## Core Features
 

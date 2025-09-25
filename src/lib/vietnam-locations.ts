@@ -17,25 +17,13 @@ export interface LocationDetail {
 // Ho Chi Minh City (Saigon) locations database
 export const VIETNAM_LOCATIONS: { [key: string]: LocationDetail } = {
   // Day 1 - Arrival & District 1
-  'Tan Son Nhat Airport (Arrival)': {
-    name: 'Tan Son Nhat Airport',
-    fullAddress: 'Tan Son Nhat Airport, Truong Son Street, Ward 2, Tan Binh District, Ho Chi Minh City, Vietnam',
-    placeId: 'ChIJ4_KiYaAmdTERXGibhagKoRU',
-    coordinates: { lat: 10.8186, lng: 106.6524 },
-    district: 'Tan Binh',
-    city: 'Ho Chi Minh City',
-    country: 'Vietnam'
-  },
+  // 'Tan Son Nhat Airport (Arrival)' - Removed outdated static data, now uses Google Places API
+  // Current Place ID: ChIJnZ-oGhEpdTER8ycbqsCc8Ng (from Google Places API)
+  // Coordinates: 10.8139, 106.6538
 
-  'District 1 Hotel Area': {
-    name: 'District 1 Central Area',
-    fullAddress: 'District 1, Ho Chi Minh City, Vietnam',
-    placeId: 'ChIJqzLZ6ZAudTERzVzFj4sLZ1I',
-    coordinates: { lat: 10.7769, lng: 106.7009 },
-    district: 'District 1',
-    city: 'Ho Chi Minh City',
-    country: 'Vietnam'
-  },
+  // 'District 1 Hotel Area' - Removed static data, now uses Google Places API search for "District 1"
+  // Correct location: District 1, Ho Chi Minh City
+  // Place ID: ChIJe4jt-TgvdTERiYl2A1ftrRQ (from Google Places API)
 
   'Notre Dame Cathedral': {
     name: 'Notre Dame Cathedral of Saigon',
@@ -57,25 +45,13 @@ export const VIETNAM_LOCATIONS: { [key: string]: LocationDetail } = {
     country: 'Vietnam'
   },
 
-  'The View Rooftop Bar': {
-    name: 'The View Rooftop Bar',
-    fullAddress: 'Lotte Center Hanoi, 54 Lieu Giai, Ba Dinh, Hanoi, Vietnam', // Note: This might be incorrect location - needs verification
-    coordinates: { lat: 10.7769, lng: 106.7009 },
-    district: 'District 1',
-    city: 'Ho Chi Minh City',
-    country: 'Vietnam'
-  },
+  // 'The View Rooftop Bar' - Removed incorrect static data, now uses Google Places API
+  // Correct location: 195 Bùi Viện, Phường Phạm Ngũ Lão, Quận 1, Hồ Chí Minh 700000
+  // Place ID: ChIJyf5lrRcvdTER6_Ii1NXfYhg
 
   // Day 2 - Museums & Culture
-  'War Remnants Museum': {
-    name: 'War Remnants Museum',
-    fullAddress: '28 Vo Van Tan, Ward 6, District 3, Ho Chi Minh City, Vietnam',
-    placeId: 'ChIJ-cRjV5IudTERsJOgCJjFdHU',
-    coordinates: { lat: 10.7798, lng: 106.6922 },
-    district: 'District 3',
-    city: 'Ho Chi Minh City',
-    country: 'Vietnam'
-  },
+  // 'War Remnants Museum' - Removed outdated static data, now uses Google Places API
+  // Current Place ID: ChIJzwg3ojAvdTERqnQUK99K2Xw (from Google Places API)
 
   'Tan Dinh Church (Pink Church)': {
     name: 'Tan Dinh Church',
@@ -108,15 +84,8 @@ export const VIETNAM_LOCATIONS: { [key: string]: LocationDetail } = {
     country: 'Vietnam'
   },
 
-  'Reunification Palace': {
-    name: 'Independence Palace',
-    fullAddress: '135 Nam Ky Khoi Nghia, District 1, Ho Chi Minh City, Vietnam',
-    placeId: 'ChIJ4_YQdZAudTERLYqSoKjKa5Q',
-    coordinates: { lat: 10.7768, lng: 106.6955 },
-    district: 'District 1',
-    city: 'Ho Chi Minh City',
-    country: 'Vietnam'
-  },
+  // 'Reunification Palace' - Removed outdated static data, now uses Google Places API
+  // Current Place ID: ChIJL0dwVTgvdTERao3t8B1Jhxc (from Google Places API, aka "Independence Palace")
 
   'Ben Thanh Market': {
     name: 'Ben Thanh Market',
@@ -156,15 +125,9 @@ export const VIETNAM_LOCATIONS: { [key: string]: LocationDetail } = {
     country: 'Vietnam'
   },
 
-  'Anan Saigon': {
-    name: 'Anan Saigon Restaurant',
-    fullAddress: '89 Ton That Dam, District 1, Ho Chi Minh City, Vietnam',
-    placeId: 'ChIJffeVmJIudTER5YzGJqzThJE',
-    coordinates: { lat: 10.7734, lng: 106.6920 },
-    district: 'District 1',
-    city: 'Ho Chi Minh City',
-    country: 'Vietnam'
-  },
+  // 'Anan Saigon' - Removed outdated static data, now uses Google Places API
+  // Current Place ID: ChIJZ_dpJ0EvdTER5wOl-TLvN-8 (from Google Places API)
+  // Address: 89 Tôn Thất Đạm, Bến Nghé, Ho Chi Minh City
 
   // Day 6 - Departure
   'Tan Son Nhat Airport (Departure)': {
