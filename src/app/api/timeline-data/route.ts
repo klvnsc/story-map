@@ -124,7 +124,8 @@ async function addDirectionsUrls(days: TripDay[]): Promise<void> {
 
 export async function GET() {
   try {
-    const filePath = path.join(process.cwd(), 'data', 'sharon-trip.txt');
+    const filePath = path.join(process.cwd(), 'public', 'sharon-trip.txt');
+    console.log('Trying to read file from:', filePath);
     const fileContent = await fs.readFile(filePath, 'utf-8');
 
     const lines = fileContent.split('\n').map(line => line.trim()).filter(line => line);
