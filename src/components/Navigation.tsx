@@ -20,6 +20,7 @@ export default function Navigation({ user }: NavigationProps) {
     { name: 'Stories', href: '/stories', icon: '📚' },
     { name: 'Collections', href: '/collections', icon: '📁' },
     { name: 'Map', href: '/map', icon: '🗺️' },
+    { name: 'Timeline', href: '/timeline', icon: '🗓️' },
     { name: 'Manage', href: '/manage', icon: '⚙️', disabled: true },
   ];
 
