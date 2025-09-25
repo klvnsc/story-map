@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
 import { generateImprovedDirectionsUrl, estimateWalkingTime } from '@/lib/vietnam-locations';
 import { enhancedLocationLookup, GooglePlaceResult } from '@/lib/google-places';
 
@@ -122,11 +120,45 @@ async function addDirectionsUrls(days: TripDay[]): Promise<void> {
   }
 }
 
+// Embedded trip data for reliable deployment
+const SHARON_TRIP_DATA = `Day 1 - Friday, Sept 26 (Arrival & District 1)
+
+Tan Son Nhat Airport
+District 1
+Notre Dame Cathedral
+Central Post Office
+The View Rooftop Bar
+
+Day 2 - Saturday, Sept 27 (Museums & Culture)
+
+War Remnants Museum
+Tan Dinh Church (Pink Church)
+
+Day 3 - Sunday, Sept 28 (Mekong Delta Tour)
+
+Mekong Delta Region
+
+Day 4 - Monday, Sept 29 (Cu Chi & City Sights)
+
+Cu Chi District
+Reunification Palace
+Ben Thanh Market
+Ben Thanh Night Market Area
+
+Day 5 - Tuesday, Sept 30 (Relaxation & Farewell)
+
+Apartment Cafes Building
+The Secret Garden
+Anan Saigon
+
+Day 6 - Wednesday, Oct 1 (Departure)
+
+Tan Son Nhat Airport`;
+
 export async function GET() {
   try {
-    const filePath = path.join(process.cwd(), 'public', 'sharon-trip.txt');
-    console.log('Trying to read file from:', filePath);
-    const fileContent = await fs.readFile(filePath, 'utf-8');
+    console.log('Using embedded trip data for reliability');
+    const fileContent = SHARON_TRIP_DATA;
 
     const lines = fileContent.split('\n').map(line => line.trim()).filter(line => line);
     const days: TripDay[] = [];
