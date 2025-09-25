@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
-import { enhancedLocationLookup, searchPlace, getCacheStats } from '@/lib/google-places';
+import { enhancedLocationLookup, getCacheStats } from '@/lib/google-places';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q');
-    const location = searchParams.get('location');
     const action = searchParams.get('action');
 
     // Handle cache stats request

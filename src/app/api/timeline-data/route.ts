@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { generateImprovedDirectionsUrl, estimateWalkingTime } from '@/lib/vietnam-locations';
-import { enhancedLocationLookup } from '@/lib/google-places';
+import { enhancedLocationLookup, GooglePlaceResult } from '@/lib/google-places';
 
 // Calculate distance between two coordinates using Haversine formula
 function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -60,7 +60,7 @@ export interface Timeline {
 
 async function addDirectionsUrls(days: TripDay[]): Promise<void> {
   let previousLocation: Location | null = null;
-  let previousPlaceData: any = null;
+  let previousPlaceData: GooglePlaceResult | null = null;
 
   for (const day of days) {
     for (const location of day.locations) {
