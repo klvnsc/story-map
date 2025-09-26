@@ -401,3 +401,126 @@ Based on collections-manifest.json data:
 │   └── schema-updates-gps-location.sql     # GPS location feature schema updates
 └── data-story-collection/     # 61 CSV files with raw story data
 ```
+
+## Google Maps URL API Integration
+
+### Timeline Location Management System
+
+The project implements a comprehensive location database management system with Google Maps URL integration for directions. Key components:
+
+- **Database**: `timeline_locations` table with Place ID validation
+- **Service Layer**: `LocationService` class for CRUD operations
+- **UI Components**: Inline editing with three-dot menus and validation indicators
+- **API Integration**: Google Places API for Place ID validation
+
+### Google Maps URL Best Practices
+
+Based on Google Maps URL API documentation and implementation experience:
+
+#### URL Format Structure
+```
+https://www.google.com/maps/dir/?api=1&travelmode=TRAVEL_MODE&origin=ORIGIN&destination=DESTINATION
+```
+
+#### Location Parameter Options (Priority Order)
+
+**1. Coordinates (Most Reliable - Implemented)**
+```typescript
+// Format: "latitude,longitude"
+params.set('origin', `${lat},${lng}`);
+params.set('destination', `${lat},${lng}`);
+// Example: origin=10.8186,106.6524&destination=10.7753,106.7028
+```
+
+**2. Place IDs (Google Recommended)**
+```typescript
+// Requires both place name and place_id parameters
+params.set('origin', 'Location Name');
+params.set('origin_place_id', 'ChIJ...');
+params.set('destination', 'Location Name');
+params.set('destination_place_id', 'ChIJ...');
+```
+
+**3. Full Addresses (Fallback)**
+```typescript
+params.set('origin', 'Full Address, City, Country');
+params.set('destination', 'Full Address, City, Country');
+```
+
+#### Implementation Strategy (Three-Tier Fallback)
+
+The system uses a reliability-based fallback approach:
+
+```typescript
+// 1. PRIMARY: Coordinates (most reliable for directions)
+if (originLocation.coordinates && destinationLocation.coordinates) {
+  params.set('origin', `${originLocation.coordinates.lat},${originLocation.coordinates.lng}`);
+  params.set('destination', `${destinationLocation.coordinates.lat},${destinationLocation.coordinates.lng}`);
+}
+// 2. SECONDARY: Place IDs (when coordinates unavailable)
+else if (originLocation.placeId && destinationLocation.placeId) {
+  params.set('origin_place_id', originLocation.placeId);
+  params.set('destination_place_id', destinationLocation.placeId);
+}
+// 3. TERTIARY: Full addresses (final fallback)
+else {
+  params.set('origin', originLocation.fullAddress);
+  params.set('destination', destinationLocation.fullAddress);
+}
+```
+
+#### Key Findings
+
+- **Coordinates**: Most reliable for directions, bypass Google's Place ID resolution
+- **Place IDs**: Best for establishment identification but can fail in directions URLs
+- **Mixed Parameters**: Avoid mixing place names with Place IDs - causes parsing conflicts
+- **URL Encoding**: Automatic via `URLSearchParams.toString()`
+- **Travel Modes**: `walking`, `driving`, `bicycling`, `transit`, `two-wheeler`
+
+#### Database Schema Integration
+
+```sql
+CREATE TABLE timeline_locations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name VARCHAR(255) NOT NULL,                    -- Display name in UI
+  coordinates JSONB NOT NULL,                    -- {lat: number, lng: number}
+  place_id VARCHAR(255),                         -- Google Places unique identifier
+  formatted_address TEXT,                        -- Google Places formatted address
+  place_name VARCHAR(255),                       -- Searchable name for validation
+  is_place_id_validated BOOLEAN DEFAULT false,   -- Controls visual indicators
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+#### Visual Indicators
+
+- **Green Filled Circle**: Validated location (`is_place_id_validated: true`)
+- **Green Outline Circle**: Unvalidated location (`is_place_id_validated: false`)
+- **Three-dot Menu**: Available for all database locations with Edit/Validate/Mark as Area actions
+
+#### Performance Considerations
+
+- **Batch Database Queries**: Use `batchGetLocationDetailsFromDb()` for timeline API
+- **Haversine Distance Calculation**: For travel time estimation between coordinates
+- **Fallback Strategies**: Multiple levels ensure directions always work
+- **RLS Policies**: Disabled for development consistency with other tables
+
+## Related Documentation
+
+### Technical Architecture
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Complete system architecture overview
+  - High-level system design and technology stack
+  - Detailed component breakdown and responsibilities
+  - Database schema with relationships and data flow
+  - Key features implementation details
+  - Development setup and deployment pipeline
+
+### Feature Specifications
+- **[/specs/location-database-management-requirements.md](specs/location-database-management-requirements.md)** - Location database management system
+- **[/specs/gps-story-correlation.md](specs/gps-story-correlation.md)** - GPS correlation system specification
+- **[/specs/unified-tag-system-requirements.md](specs/unified-tag-system-requirements.md)** - Unified tag system specification
+- **[/specs/story-location-editing-requirements.md](specs/story-location-editing-requirements.md)** - Location editing requirements (127 REQs)
+
+### Data Structure
+- **[/data/collections-manifest.json](data/collections-manifest.json)** - Master collection metadata & expedition structure (v1.2.0)
