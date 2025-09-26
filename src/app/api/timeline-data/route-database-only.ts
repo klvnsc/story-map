@@ -90,12 +90,7 @@ async function addDirectionsUrls(days: TripDay[]): Promise<void> {
             const travelMode = distance < 2.0 ? 'walking' : 'driving';
             location.travelMode = travelMode;
 
-            // Calculate travel time based on mode
-            const walkingSpeedKmh = 5;
-            const drivingSpeedKmh = 30;
-            const speedKmh = travelMode === 'walking' ? walkingSpeedKmh : drivingSpeedKmh;
-
-            const timeHours = distance / speedKmh;
+            const timeHours = distance / (travelMode === 'walking' ? 5 : 30); // 5kmh walking, 30kmh driving
             const timeMinutes = Math.round(timeHours * 60);
             location.walkingTime = `${timeMinutes} min • ${distance.toFixed(2)} km`;
           } else {

@@ -137,26 +137,10 @@ export async function searchPlace(options: PlaceSearchOptions): Promise<GooglePl
 }
 
 /**
- * Enhanced location lookup with static database fallback
+ * Enhanced location lookup using Google Places API
  */
 export async function enhancedLocationLookup(locationName: string): Promise<GooglePlaceResult | null> {
-  // First try static database (for known good results)
-  const { getLocationDetails } = await import('./vietnam-locations');
-  const staticLocation = getLocationDetails(locationName);
-
-  if (staticLocation?.placeId) {
-    // Convert static data to GooglePlaceResult format
-    return {
-      placeId: staticLocation.placeId,
-      name: staticLocation.name,
-      formattedAddress: staticLocation.fullAddress,
-      coordinates: staticLocation.coordinates || { lat: 0, lng: 0 },
-      types: [],
-      confidence: 'high' // Static data is considered high confidence
-    };
-  }
-
-  // Fallback to dynamic Google Places API search
+  // Use Google Places API for dynamic lookup
   return await searchPlace({
     query: locationName,
     location: 'Ho Chi Minh City, Vietnam',
