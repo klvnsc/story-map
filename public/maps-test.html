@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Direct Google Maps Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #map { height: 400px; width: 100%; border: 2px solid #ccc; margin: 20px 0; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .loading { background: #e3f2fd; color: #1976d2; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e8; color: #2e7d32; }
+    </style>
+</head>
+<body>
+    <h1>Direct Google Maps API Test</h1>
+    <p>This test loads Google Maps directly without React/Next.js interference.</p>
+
+    <div id="status" class="status loading">🔄 Loading Google Maps API...</div>
+
+    <div id="map"></div>
+
+    <div id="info">
+        <h3>API Information:</h3>
+        <p><strong>API Key:</strong> <span id="api-key"></span></p>
+        <p><strong>Status:</strong> <span id="load-status">Loading...</span></p>
+        <p><strong>Time:</strong> <span id="load-time">0s</span></p>
+    </div>
+
+    <script>
+        const startTime = Date.now();
+        const statusDiv = document.getElementById('status');
+        const apiKeySpan = document.getElementById('api-key');
+        const loadStatusSpan = document.getElementById('load-status');
+        const loadTimeSpan = document.getElementById('load-time');
+
+        // Your API key (same as in .env.local)
+        const API_KEY = 'AIzaSyCFMdICs6cG6JSTw0ikmWhSmby6DZ8x5nU';
+        apiKeySpan.textContent = API_KEY.substring(0, 15) + '...';
+
+        // Update timer every second
+        const timer = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            loadTimeSpan.textContent = elapsed + 's';
+        }, 1000);
+
+        // Function to initialize the map
+        function initMap() {
+            try {
+                const map = new google.maps.Map(document.getElementById('map'), {
+                    center: { lat: 10.8231, lng: 106.6297 }, // Ho Chi Minh City
+                    zoom: 12
+                });
+
+                // Add a marker
+                new google.maps.Marker({
+                    position: { lat: 10.8231, lng: 106.6297 },
+                    map: map,
+                    title: 'Ho Chi Minh City'
+                });
+
+                clearInterval(timer);
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+
+                statusDiv.className = 'status success';
+                statusDiv.innerHTML = '✅ Google Maps loaded successfully in ' + elapsed + ' seconds!';
+                loadStatusSpan.textContent = 'Success';
+                loadTimeSpan.textContent = elapsed + 's';
+
+                console.log('Google Maps loaded successfully');
+            } catch (error) {
+                clearInterval(timer);
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = '❌ Error initializing map: ' + error.message;
+                loadStatusSpan.textContent = 'Error: ' + error.message;
+                loadTimeSpan.textContent = elapsed + 's';
+
+                console.error('Map initialization error:', error);
+            }
+        }
+
+        // Handle API load errors
+        function handleError() {
+            clearInterval(timer);
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+
+            statusDiv.className = 'status error';
+            statusDiv.innerHTML = '❌ Failed to load Google Maps API after ' + elapsed + ' seconds';
+            loadStatusSpan.textContent = 'Failed to load API';
+            loadTimeSpan.textContent = elapsed + 's';
+
+            console.error('Google Maps API failed to load');
+        }
+
+        // Set timeout for API loading
+        setTimeout(() => {
+            if (!window.google) {
+                handleError();
+            }
+        }, 20000); // 20 second timeout
+
+        // Make initMap globally available
+        window.initMap = initMap;
+    </script>
+
+    <!-- Load Google Maps API -->
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCFMdICs6cG6JSTw0ikmWhSmby6DZ8x5nU&callback=initMap&libraries=places"
+        onerror="handleError()">
+    </script>
+</body>
+</html>

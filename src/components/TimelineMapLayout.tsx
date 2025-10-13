@@ -61,6 +61,8 @@ function convertTimelineDataToMapLocations(timeline: Timeline): TimelineLocation
         timeline_sequence: location.sequence,
         place_id: placeId,
         formatted_address: formattedAddress,
+        is_place_id_validated: !!placeId, // true if Google Places validated the location
+        is_timeline_location: true,       // this is a timeline-specific location
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
