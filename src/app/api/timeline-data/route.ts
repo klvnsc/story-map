@@ -41,6 +41,12 @@ export interface Location {
   directionsUrl?: string;
   walkingTime?: string;
   travelMode?: 'walking' | 'driving';
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+  placeId?: string;
+  formattedAddress?: string;
 }
 
 export interface TripDay {
@@ -110,11 +116,25 @@ async function addDirectionsUrls(days: TripDay[]): Promise<void> {
           location.walkingTime = estimateWalkingTime(previousLocation.name, location.name);
         }
 
+        // Store Google Places coordinates and metadata if available
+        if (currentPlaceData) {
+          location.coordinates = currentPlaceData.coordinates;
+          location.placeId = currentPlaceData.placeId;
+          location.formattedAddress = currentPlaceData.formattedAddress;
+        }
+
         // Store current place data for next iteration
         previousPlaceData = currentPlaceData;
       } else {
         // First location - just look it up for next iteration
         previousPlaceData = await enhancedLocationLookup(location.name);
+
+        // Store Google Places coordinates and metadata for first location too
+        if (previousPlaceData) {
+          location.coordinates = previousPlaceData.coordinates;
+          location.placeId = previousPlaceData.placeId;
+          location.formattedAddress = previousPlaceData.formattedAddress;
+        }
       }
 
       previousLocation = location;

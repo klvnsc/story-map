@@ -81,6 +81,7 @@ export default function StoryDetail() {
   const [gpsSuggestions, setGpsSuggestions] = useState<GPSCorrelationData | null>(null);
   const [suggestedTags, setSuggestedTags] = useState<TagWithMetadata[]>([]);
   const [showGpsSuggestions, setShowGpsSuggestions] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [manualTagSourceOverride, setManualTagSourceOverride] = useState<string | null>(null);
 
   useEffect(() => {
@@ -339,6 +340,7 @@ export default function StoryDetail() {
   };
   
   // Determine tag source based on current state
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const determineTagSource = (): 'gps_estimated' | 'manual' | 'mixed' | 'excluded' => {
     if (!story?.collection?.is_expedition_scope) return 'excluded';
     

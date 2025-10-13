@@ -7,6 +7,13 @@ export interface Location {
   dayNumber: number;
   directionsUrl?: string;
   walkingTime?: string;
+  travelMode?: 'walking' | 'driving';
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+  placeId?: string;
+  formattedAddress?: string;
 }
 
 export interface TripDay {

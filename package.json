@@ -11,8 +11,10 @@
     "renew-cdn-urls": "ts-node --project scripts/tsconfig.json scripts/renew-cdn-urls.ts"
   },
   "dependencies": {
+    "@googlemaps/js-api-loader": "^1.16.10",
     "@supabase/supabase-js": "^2.54.0",
     "@types/cheerio": "^0.22.35",
+    "@types/google.maps": "^3.58.1",
     "cheerio": "^1.1.2",
     "commander": "^14.0.0",
     "csv-parse": "^6.1.0",
