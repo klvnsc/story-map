@@ -21,9 +21,15 @@ export const VIETNAM_LOCATIONS: { [key: string]: LocationDetail } = {
   // Current Place ID: ChIJnZ-oGhEpdTER8ycbqsCc8Ng (from Google Places API)
   // Coordinates: 10.8139, 106.6538
 
-  // 'District 1 Hotel Area' - Removed static data, now uses Google Places API search for "District 1"
-  // Correct location: District 1, Ho Chi Minh City
-  // Place ID: ChIJe4jt-TgvdTERiYl2A1ftrRQ (from Google Places API)
+  'District 1': {
+    name: 'District 1',
+    fullAddress: 'District 1, Ho Chi Minh City, Vietnam',
+    placeId: 'ChIJe4jt-TgvdTERiYl2A1ftrRQ',
+    coordinates: { lat: 10.7753, lng: 106.7028 },
+    district: 'District 1',
+    city: 'Ho Chi Minh City',
+    country: 'Vietnam'
+  },
 
   'Notre Dame Cathedral': {
     name: 'Notre Dame Cathedral of Saigon',

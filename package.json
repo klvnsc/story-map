@@ -11,6 +11,9 @@
     "renew-cdn-urls": "ts-node --project scripts/tsconfig.json scripts/renew-cdn-urls.ts"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@googlemaps/js-api-loader": "^1.16.10",
     "@supabase/supabase-js": "^2.54.0",
     "@types/cheerio": "^0.22.35",

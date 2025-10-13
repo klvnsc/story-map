@@ -1,0 +1,300 @@
+import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import {
+  batchGetLocationDetailsFromDb,
+  generateEnhancedDirectionsUrl
+} from '@/lib/timeline-locations-db';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+// Simplified timeline API for reliable deployment
+
+export interface Location {
+  name: string;
+  sequence: number;
+  dayNumber: number;
+  directionsUrl?: string;
+  walkingTime?: string;
+  travelMode?: 'walking' | 'driving';
+}
+
+export interface TripDay {
+  dayNumber: number;
+  date: string;
+  description: string;
+  locations: Location[];
+}
+
+export interface Timeline {
+  title: string;
+  days: TripDay[];
+  totalLocations: number;
+}
+
+/**
+ * Merge database timeline locations with static data
+ */
+async function mergeTimelineLocations(days: TripDay[]): Promise<void> {
+  try {
+    // Fetch all timeline locations from database
+    const { data: timelineLocations, error } = await supabase
+      .from('timeline_locations')
+      .select('*')
+      .eq('is_timeline_location', true)
+      .order('timeline_day_number', { ascending: true })
+      .order('timeline_sequence', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching timeline locations:', error);
+      return; // Continue with static data only
+    }
+
+    if (!timelineLocations || timelineLocations.length === 0) {
+      console.log('No timeline locations found in database');
+      return; // No database locations to merge
+    }
+
+    // Group database locations by day
+    const locationsByDay = new Map<number, any[]>();
+    timelineLocations.forEach(loc => {
+      const dayNum = loc.timeline_day_number;
+      if (!locationsByDay.has(dayNum)) {
+        locationsByDay.set(dayNum, []);
+      }
+      locationsByDay.get(dayNum)!.push(loc);
+    });
+
+    // Merge database locations into each day
+    days.forEach(day => {
+      const dbLocations = locationsByDay.get(day.dayNumber) || [];
+
+      if (dbLocations.length > 0) {
+        console.log(`Merging ${dbLocations.length} database locations into Day ${day.dayNumber}`);
+
+        // Convert database locations to Location format
+        const convertedLocations: Location[] = dbLocations.map(dbLoc => ({
+          name: dbLoc.name,
+          sequence: dbLoc.timeline_sequence,
+          dayNumber: day.dayNumber
+        }));
+
+        // Combine static and database locations
+        const allLocations = [...day.locations, ...convertedLocations];
+
+        // Sort by sequence and re-sequence
+        allLocations.sort((a, b) => a.sequence - b.sequence);
+        allLocations.forEach((loc, index) => {
+          loc.sequence = index + 1;
+        });
+
+        // Update day with merged locations
+        day.locations = allLocations;
+
+        console.log(`Day ${day.dayNumber} now has ${allLocations.length} total locations`);
+      }
+    });
+
+  } catch (error) {
+    console.error('Error merging timeline locations:', error);
+    // Continue with static data only
+  }
+}
+
+// Enhanced directions URL generation with Google Places API lookup
+
+async function addDirectionsUrls(days: TripDay[]): Promise<void> {
+  let previousLocation: Location | null = null;
+
+  // Collect all unique location names for batch database lookup
+  const locationNames = days
+    .flatMap(day => day.locations)
+    .map(location => location.name);
+  const uniqueNames = Array.from(new Set(locationNames));
+
+  // Batch fetch location data from database
+  const locationDetailsMap = await batchGetLocationDetailsFromDb(uniqueNames);
+
+  for (const day of days) {
+    for (const location of day.locations) {
+      if (previousLocation) {
+        try {
+          // Use enhanced database-backed directions URL generation
+          location.directionsUrl = await generateEnhancedDirectionsUrl(
+            previousLocation.name,
+            location.name,
+            'walking'
+          );
+
+          // Calculate distance for travel time if coordinates available
+          const prevLocationDetails = locationDetailsMap.get(previousLocation.name);
+          const currentLocationDetails = locationDetailsMap.get(location.name);
+
+          if (prevLocationDetails?.coordinates && currentLocationDetails?.coordinates) {
+            // Calculate distance using Haversine formula
+            const distance = calculateDistance(
+              prevLocationDetails.coordinates.lat,
+              prevLocationDetails.coordinates.lng,
+              currentLocationDetails.coordinates.lat,
+              currentLocationDetails.coordinates.lng
+            );
+
+            // Determine travel mode and time based on distance
+            const travelMode = distance < 2.0 ? 'walking' : 'driving';
+            location.travelMode = travelMode;
+
+            const timeHours = distance / (travelMode === 'walking' ? 5 : 30); // 5kmh walking, 30kmh driving
+            const timeMinutes = Math.round(timeHours * 60);
+            location.walkingTime = `${timeMinutes} min • ${distance.toFixed(2)} km`;
+          } else {
+            // Fallback to default estimate
+            location.walkingTime = '~15 min';
+            location.travelMode = 'walking';
+          }
+
+        } catch (error) {
+          console.error('Error generating enhanced directions:', error);
+
+          // Fallback to simple directions URL
+          const baseUrl = 'https://www.google.com/maps/dir/';
+          const params = new URLSearchParams({
+            api: '1',
+            origin: previousLocation.name,
+            destination: location.name,
+            travelmode: 'walking'
+          });
+          location.directionsUrl = `${baseUrl}?${params.toString()}`;
+          location.walkingTime = '~15 min';
+          location.travelMode = 'walking';
+        }
+      }
+
+      previousLocation = location;
+    }
+  }
+}
+
+// Calculate distance between two coordinates using Haversine formula
+function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng/2) * Math.sin(dLng/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const distance = R * c;
+  return distance;
+}
+
+// Embedded trip data for reliable deployment
+const SHARON_TRIP_DATA = `Day 1 - Friday, Sept 26 (Arrival & District 1)
+
+Tan Son Nhat Airport
+District 1
+Notre Dame Cathedral
+Central Post Office
+The View Rooftop Bar
+
+Day 2 - Saturday, Sept 27 (Museums & Culture)
+
+War Remnants Museum
+Tan Dinh Church (Pink Church)
+
+Day 3 - Sunday, Sept 28 (Mekong Delta Tour)
+
+Mekong Delta Region
+
+Day 4 - Monday, Sept 29 (Cu Chi & City Sights)
+
+Cu Chi District
+Reunification Palace
+Ben Thanh Market
+Ben Thanh Night Market Area
+
+Day 5 - Tuesday, Sept 30 (Relaxation & Farewell)
+
+Apartment Cafes Building
+The Secret Garden
+Anan Saigon
+
+Day 6 - Wednesday, Oct 1 (Departure)
+
+Tan Son Nhat Airport`;
+
+export async function GET() {
+  try {
+    console.log('Using embedded trip data for reliability');
+    const fileContent = SHARON_TRIP_DATA;
+
+    const lines = fileContent.split('\n').map(line => line.trim()).filter(line => line);
+    const days: TripDay[] = [];
+    let currentDay: TripDay | null = null;
+    let locationSequence = 1;
+
+    for (const line of lines) {
+      // Check if this is a day header
+      const dayMatch = line.match(/^Day (\d+) - (.+)$/);
+
+      if (dayMatch) {
+        // Save previous day if it exists
+        if (currentDay) {
+          days.push(currentDay);
+        }
+
+        // Create new day
+        const dayNumber = parseInt(dayMatch[1]);
+        const dateAndDescription = dayMatch[2];
+
+        currentDay = {
+          dayNumber,
+          date: dateAndDescription,
+          description: dateAndDescription,
+          locations: []
+        };
+
+        locationSequence = 1;
+      } else {
+        // This is a location line
+        if (currentDay && line) {
+          const location: Location = {
+            name: line,
+            sequence: locationSequence++,
+            dayNumber: currentDay.dayNumber
+          };
+
+          currentDay.locations.push(location);
+        }
+      }
+    }
+
+    // Add the last day
+    if (currentDay) {
+      days.push(currentDay);
+    }
+
+    // Merge with database timeline locations
+    await mergeTimelineLocations(days);
+
+    // Generate directions URLs with Google Places API lookup
+    await addDirectionsUrls(days);
+
+    const timeline: Timeline = {
+      title: "Sharon's Vietnam Trip",
+      days,
+      totalLocations: days.reduce((total, day) => total + day.locations.length, 0)
+    };
+
+    return NextResponse.json({ success: true, data: timeline });
+
+  } catch (error) {
+    console.error('Error parsing timeline data:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to parse timeline data' },
+      { status: 500 }
+    );
+  }
+}
