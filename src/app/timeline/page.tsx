@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { isAuthenticated, getCurrentUser } from '@/lib/auth';
 import { fetchTimelineData, generateCSVExport, generateKMLExport, type Timeline } from '@/lib/timeline-data';
 import Navigation from '@/components/Navigation';
-import TimelineView from '@/components/TimelineView';
+import TimelineMapLayout from '@/components/TimelineMapLayout';
+import { ExportDropdown } from '@/components/ExportDropdown';
 
 function TimelineContent() {
   const router = useRouter();
@@ -13,6 +14,7 @@ function TimelineContent() {
   const [user, setUser] = useState<{ username: string } | null>(null);
   const [timeline, setTimeline] = useState<Timeline | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isMapVisible, setIsMapVisible] = useState(true);
 
   useEffect(() => {
     const checkAuthAndLoadData = async () => {
@@ -25,12 +27,20 @@ function TimelineContent() {
       setUser(currentUser);
 
       try {
+        console.log('🔥 Timeline: Starting fetchTimelineData...');
         const timelineData = await fetchTimelineData();
+        console.log('🔥 Timeline: Received data:', {
+          title: timelineData.title,
+          daysCount: timelineData.days.length,
+          totalLocations: timelineData.totalLocations
+        });
         setTimeline(timelineData);
+        console.log('🔥 Timeline: Set timeline state successfully');
       } catch (error) {
-        console.error('Failed to load timeline data:', error);
+        console.error('🔥 Timeline: Failed to load timeline data:', error);
         setError('Failed to load timeline data');
       } finally {
+        console.log('🔥 Timeline: Setting isLoading to false');
         setIsLoading(false);
       }
     };
@@ -91,10 +101,10 @@ function TimelineContent() {
       <Navigation user={user} />
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           {/* Header */}
-          <div className="mb-8">
+          <div className="mb-6">
             <div className="flex justify-between items-start">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Itinerary</h1>
@@ -103,26 +113,23 @@ function TimelineContent() {
                 </p>
               </div>
 
-              {/* Export Controls */}
+              {/* Clean Controls - Export + Map Toggle */}
               <div className="flex space-x-3">
+                <ExportDropdown onExport={handleExport} />
                 <button
-                  onClick={() => handleExport('csv')}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
-                >
-                  📄 Export CSV
-                </button>
-                <button
-                  onClick={() => handleExport('kml')}
+                  onClick={() => setIsMapVisible(!isMapVisible)}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
                 >
-                  🗺️ Export KML
+                  📍 {isMapVisible ? 'Hide Map' : 'Show Map'}
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Timeline */}
-          <TimelineView timeline={timeline} />
+          {/* Timeline & Map Layout - Clean Layout */}
+          <div className="h-96" style={{ minHeight: '500px' }}>
+            <TimelineMapLayout timeline={timeline} isMapVisible={isMapVisible} />
+          </div>
         </div>
       </main>
     </div>

@@ -235,7 +235,7 @@ export default function MapView({ selectedPhase }: MapViewProps) {
         {/* Trip Route Line */}
         {filteredStories.length > 1 && (
           <Source
-            type="geojson" 
+            type="geojson"
             data={{
               type: 'Feature',
               properties: {},

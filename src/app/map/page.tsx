@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { isAuthenticated, getCurrentUser } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { StoryCollection } from '@/types';
@@ -10,7 +10,6 @@ import Navigation from '@/components/Navigation';
 
 function MapContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [selectedPhase, setSelectedPhase] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<{ username: string } | null>(null);
