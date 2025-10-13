@@ -16,6 +16,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@googlemaps/js-api-loader": "^1.16.10",
     "@supabase/supabase-js": "^2.54.0",
+    "@tailwindcss/oxide": "^4.1.11",
     "@types/cheerio": "^0.22.35",
     "@types/google.maps": "^3.58.1",
     "cheerio": "^1.1.2",
